@@ -219,7 +219,18 @@ class LeadManager:
             query += f" ORDER BY estimated_deal_value DESC, id DESC LIMIT {p}"
             params.append(limit)
             cursor.execute(query, params)
-            return [dict(row) for row in cursor.fetchall()]
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                d = dict(row)
+                if d.get("estimated_deal_value") is not None:
+                    d["estimated_deal_value"] = int(d["estimated_deal_value"])
+                if d.get("created_at") is not None:
+                    d["created_at"] = str(d["created_at"])
+                if d.get("updated_at") is not None:
+                    d["updated_at"] = str(d["updated_at"])
+                result.append(d)
+            return result
 
     def update_lead(self, lead_id: int, status: Optional[str] = None, pitch_draft: Optional[str] = None, deal_tier: Optional[str] = None, estimated_value: Optional[int] = None) -> bool:
         p = q_ph()
@@ -278,18 +289,19 @@ class LeadManager:
             if not res_total:
                 total = 0
             elif isinstance(res_total, dict):
-                total = list(res_total.values())[0] or 0
+                total = int(list(res_total.values())[0] or 0)
             else:
-                total = res_total[0] or 0
+                total = int(res_total[0] or 0)
             
             cursor.execute("SELECT sum(estimated_deal_value) FROM leads")
             res_sum = cursor.fetchone()
             if not res_sum:
-                sum_val = 0
+                sum_val = 0.0
             elif isinstance(res_sum, dict):
-                sum_val = list(res_sum.values())[0] or 0
+                raw = list(res_sum.values())[0]
+                sum_val = float(raw) if raw is not None else 0.0
             else:
-                sum_val = res_sum[0] or 0
+                sum_val = float(res_sum[0]) if res_sum[0] is not None else 0.0
             
             cursor.execute("SELECT deal_tier, count(*), sum(estimated_deal_value) FROM leads GROUP BY deal_tier")
             rows = cursor.fetchall()
@@ -297,9 +309,9 @@ class LeadManager:
             for r in rows:
                 if isinstance(r, dict):
                     vals = list(r.values())
-                    by_tier[vals[0] or "Unknown"] = {"count": vals[1] or 0, "value": vals[2] or 0}
+                    by_tier[vals[0] or "Unknown"] = {"count": int(vals[1] or 0), "value": float(vals[2] or 0)}
                 else:
-                    by_tier[r[0] or "Unknown"] = {"count": r[1] or 0, "value": r[2] or 0}
+                    by_tier[r[0] or "Unknown"] = {"count": int(r[1] or 0), "value": float(r[2] or 0)}
 
             cursor.execute("SELECT status, count(*) FROM leads GROUP BY status")
             s_rows = cursor.fetchall()
@@ -307,17 +319,17 @@ class LeadManager:
             for r in s_rows:
                 if isinstance(r, dict):
                     vals = list(r.values())
-                    by_status[vals[0] or "Unknown"] = vals[1] or 0
+                    by_status[vals[0] or "Unknown"] = int(vals[1] or 0)
                 else:
-                    by_status[r[0] or "Unknown"] = r[1] or 0
+                    by_status[r[0] or "Unknown"] = int(r[1] or 0)
 
             # Convert pipeline to Crores
-            pipeline_crores = round(sum_val / 10000000.0, 2)
-            pct_of_100_cr = round((sum_val / 1000000000.0) * 100, 2)
+            pipeline_crores = round(float(sum_val) / 10000000.0, 2)
+            pct_of_100_cr = round((float(sum_val) / 1000000000.0) * 100, 2)
 
             return {
                 "total_leads": total,
-                "pipeline_value_inr": sum_val,
+                "pipeline_value_inr": int(sum_val),
                 "pipeline_value_crores": pipeline_crores,
                 "percent_of_100cr_goal": pct_of_100_cr,
                 "by_tier": by_tier,
