@@ -1,4 +1,4 @@
-﻿# src/chemkonnect_mcp.py
+# src/chemkonnect_mcp.py
 """
 Chemkonnect Global - ₹100 Crore Sales MCP Server
 Connects Antigravity AI agents to:
@@ -192,6 +192,30 @@ def export_leads_to_csv() -> Dict[str, str]:
         "status": "success",
         "csv_path": csv_file,
         "message": f"Successfully exported leads to: {csv_file}"
+    }
+
+@mcp.tool()
+def trigger_pan_india_market_harvest(region: str = "Pan-India (All States)") -> Dict[str, Any]:
+    """
+    Triggers an instant multi-source market scan across all states of India:
+    - Real estate towers nearing possession (99acres, MagicBricks, NoBroker)
+    - Turnkey commercial interior giants (Ashish Interbuild, Astitva, Cherry Hill)
+    - TradeIndia verified industrial accounts
+    - IndiaMART 30-day inquiries
+    - Web requirements for Gypsum, Marine Ply, Dr Fixit, Solvents, and JSW Joints across India.
+    """
+    project_harvester.harvest_nearing_possession_projects()
+    project_harvester.harvest_commercial_interior_giants()
+    tradeindia.harvest_directory()
+    indiamart.process_and_save_leads(days_back=30)
+    stats = lm.get_stats()
+    return {
+        "status": "success",
+        "region_scanned": region,
+        "total_leads_in_cloud_db": stats["total_leads"],
+        "pipeline_value_crores": stats["pipeline_value_crores"],
+        "percent_of_100cr_goal": stats["percent_of_100cr_goal"],
+        "pipeline_breakdown": stats
     }
 
 if __name__ == "__main__":

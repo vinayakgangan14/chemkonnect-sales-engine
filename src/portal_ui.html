@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,7 @@
         <div class="flex items-center space-x-3 mt-3 sm:mt-0">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Real Estate & Interior Harvester Active
+                🟢 24/7 Cloud Auto-Harvester Active (Hourly Pan-India Scans)
             </span>
             <a href="/api/export" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold transition flex items-center gap-2 border border-slate-700 shadow-md">
                 <i class="fa-solid fa-file-excel text-emerald-400"></i> Export Excel (CSV)
@@ -159,15 +159,20 @@
                     <input id="harvest-product" type="text" placeholder="Product (Gypsum, Ply)" value="Gypsum board" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 w-40">
                     
                     <select id="harvest-location" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
-                        <option value="Mumbai">Mumbai</option>
-                        <option value="Navi Mumbai">Navi Mumbai</option>
-                        <option value="Pune">Pune</option>
-                        <option value="Thane">Thane</option>
-                        <option value="Gujarat">Gujarat</option>
+                        <option value="India">All India (Pan-India)</option>
+                        <option value="Maharashtra">Maharashtra (Mumbai / Pune / Thane)</option>
+                        <option value="Gujarat">Gujarat (Surat / Ahmedabad / Vapi)</option>
+                        <option value="Delhi NCR">Delhi NCR & North</option>
+                        <option value="Bangalore">Bangalore & Karnataka</option>
+                        <option value="Hyderabad">Hyderabad & Telangana</option>
+                        <option value="Chennai">Chennai & Tamil Nadu</option>
+                        <option value="Kolkata">Kolkata & East</option>
+                        <option value="Rajasthan">Rajasthan (Jaipur)</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh (Lucknow)</option>
                     </select>
 
                     <button onclick="triggerHarvest()" id="btn-harvest" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1">
-                        <i class="fa-solid fa-magnifying-glass"></i> Scan Web
+                        <i class="fa-solid fa-magnifying-glass"></i> Scan Pan-India
                     </button>
 
                     <select id="filter-tier" onchange="renderLeads()" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-amber-300 focus:outline-none font-semibold">
@@ -184,6 +189,10 @@
                         <option value="Contacted">Contacted</option>
                         <option value="Won">Won</option>
                     </select>
+
+                    <button onclick="clearAllFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-filter-circle-xmark text-rose-400"></i> Clear All Filters
+                    </button>
                 </div>
             </div>
         </div>
@@ -276,6 +285,13 @@
         function debounceFetch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(fetchLeads, 300);
+        }
+
+        function clearAllFilters() {
+            document.getElementById("search-input").value = "";
+            document.getElementById("filter-tier").value = "ALL";
+            document.getElementById("filter-status").value = "ALL";
+            fetchLeads();
         }
 
         function formatINR(val) {

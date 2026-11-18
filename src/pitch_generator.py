@@ -1,4 +1,4 @@
-﻿# src/pitch_generator.py
+# src/pitch_generator.py
 import sys
 import json
 import os
@@ -44,13 +44,23 @@ class PitchGenerator:
         return 'pidilite_adhesives'
 
     def classify_region_priority(self, location: str) -> str:
-        loc_lower = location.lower()
-        priority_keywords = ['mumbai', 'navi mumbai', 'thane', 'dombivli', 'kalyan', 'bhiwandi', 'pune', 'gujarat', 'vapi', 'surat', 'ahmedabad', 'maharashtra']
-        if any(k in loc_lower for k in priority_keywords):
-            return "High Priority (Core Belt: MMR / Pune / Gujarat / MH)"
+        loc_lower = (location or "").lower()
+        core_keywords = ['mumbai', 'navi mumbai', 'thane', 'dombivli', 'kalyan', 'bhiwandi', 'pune', 'gujarat', 'vapi', 'surat', 'ahmedabad', 'maharashtra']
+        north_keywords = ['delhi', 'ncr', 'noida', 'gurgaon', 'gurugram', 'haryana', 'punjab', 'rajasthan', 'jaipur', 'lucknow', 'kanpur', 'uttar pradesh', 'up']
+        south_keywords = ['bangalore', 'bengaluru', 'karnataka', 'hyderabad', 'telangana', 'chennai', 'tamil nadu', 'kerala', 'kochi', 'andhra']
+        east_keywords = ['kolkata', 'west bengal', 'bihar', 'patna', 'odisha', 'bhubaneswar', 'jharkhand', 'ranchi']
+        
+        if any(k in loc_lower for k in core_keywords):
+            return "Core Belt (MMR / Pune / Gujarat / MH)"
         elif any(k in loc_lower for k in ['uae', 'dubai', 'oman', 'usa', 'africa', 'singapore', 'export', 'abroad', '+971', '+1', '+44']):
             return "Export (Global)"
-        return "Pan-India"
+        elif any(k in loc_lower for k in north_keywords):
+            return "Pan-India (North: Delhi NCR, UP, Rajasthan)"
+        elif any(k in loc_lower for k in south_keywords):
+            return "Pan-India (South: Bangalore, Hyderabad, Chennai)"
+        elif any(k in loc_lower for k in east_keywords):
+            return "Pan-India (East: Kolkata, West Bengal)"
+        return "Pan-India (All States)"
 
     def generate_whatsapp_pitch(self, lead: Dict[str, Any]) -> str:
         name = lead.get('name', 'Sir/Madam')

@@ -23,6 +23,7 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
+import asyncio
 
 from lead_manager import LeadManager
 from pitch_generator import PitchGenerator
@@ -191,6 +192,76 @@ def fetch_giants():
         "status": "success",
         "processed_count": len(giants),
         "giants": giants
+    }
+
+async def autonomous_pan_india_hourly_harvester():
+    """
+    24/7 Autonomous Lead Harvester:
+    Runs automatically on Render Cloud every 60 minutes.
+    Continuously harvests new B2B requirements across all states of India.
+    """
+    await asyncio.sleep(45)
+    pan_india_keywords = [
+        ("Gypsum plasterboard false ceiling", "India"),
+        ("BWP 710 Marine plywood", "Maharashtra"),
+        ("Fevicol SH adhesive distributor", "Gujarat"),
+        ("Dr Fixit Fastflex waterproofing", "Delhi NCR"),
+        ("Bulk industrial acetone solvent", "Pan-India"),
+        ("Commercial interior fitout contractor", "Bangalore"),
+        ("Drywall false ceiling contractor", "Hyderabad"),
+        ("JSW expansion joint material", "Mumbai"),
+        ("Plywood wholesale dealers", "Chennai"),
+        ("Industrial solvent chemical tanker", "Vapi")
+    ]
+    
+    while True:
+        try:
+            print("[AUTONOMOUS HARVESTER] Running Pan-India hourly market harvest...")
+            try:
+                project_harvester.harvest_nearing_possession_projects()
+            except Exception as e:
+                print(f"[HARVEST NOTICE] Projects: {e}")
+                
+            try:
+                project_harvester.harvest_commercial_interior_giants()
+            except Exception as e:
+                print(f"[HARVEST NOTICE] Giants: {e}")
+                
+            try:
+                tradeindia.harvest_directory()
+            except Exception as e:
+                print(f"[HARVEST NOTICE] TradeIndia: {e}")
+                
+            try:
+                indiamart.process_and_save_leads(days_back=30)
+            except Exception as e:
+                print(f"[HARVEST NOTICE] IndiaMART: {e}")
+                
+            for kw, region in pan_india_keywords:
+                try:
+                    harvester.find_fresh_leads(product_keyword=kw, location=region, timelimit="w")
+                except Exception as e:
+                    print(f"[HARVEST NOTICE] {kw} {region}: {e}")
+                await asyncio.sleep(5)
+                
+            stats = lm.get_stats()
+            print(f"[AUTONOMOUS HARVESTER SUCCESS] Pipeline value: ₹{stats.get('pipeline_value_crores')} Cr across {stats.get('total_leads')} accounts.")
+        except Exception as e:
+            print(f"[AUTONOMOUS HARVESTER ERROR]: {e}")
+
+        # Wait exactly 1 hour (3600 seconds)
+        await asyncio.sleep(3600)
+
+@app.on_event("startup")
+async def start_autonomous_worker():
+    asyncio.create_task(autonomous_pan_india_hourly_harvester())
+
+@app.post("/api/trigger-hourly-harvest")
+async def manual_trigger_hourly():
+    asyncio.create_task(autonomous_pan_india_hourly_harvester())
+    return {
+        "status": "success",
+        "message": "Autonomous Pan-India Hourly Harvester triggered in background."
     }
 
 @app.post("/api/leads/{lead_id}/status")
