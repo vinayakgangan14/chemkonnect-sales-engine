@@ -1,0 +1,264 @@
+{
+  "company": {
+    "name": "Chemkonnect Global",
+    "location": "Dombivli / Thane, Maharashtra, India",
+    "contact_phone": "+91 76780 51141",
+    "contact_email": "info@chemkonnect.com",
+    "website": "https://chemkonnect.com",
+    "delivery_regions": {
+      "priority_core": [
+        "Mumbai",
+        "Navi Mumbai",
+        "Thane",
+        "Dombivli",
+        "Kalyan",
+        "Bhiwandi",
+        "Pune"
+      ],
+      "priority_regional": [
+        "Maharashtra",
+        "Gujarat (Vapi, Surat, Ahmedabad, Vadodara)"
+      ],
+      "nationwide": "Pan-India delivery across all industrial clusters",
+      "export": "Export supplies across Asia, Middle East, and Worldwide"
+    }
+  },
+  "categories": {
+    "pidilite_adhesives": {
+      "display_name": "Pidilite Adhesives & Woodworking",
+      "target_buyers": [
+        "Interior Designers",
+        "Modular Kitchen Manufacturers",
+        "Carpentry Contractors",
+        "Furniture Workshops"
+      ],
+      "products": [
+        {
+          "name": "Fevicol SH",
+          "description": "Synthetic resin adhesive for wood and laminate bonding with superior bond strength.",
+          "pack_sizes": [
+            "1kg",
+            "5kg",
+            "10kg",
+            "20kg",
+            "50kg"
+          ],
+          "application": "Laminate to wood bonding, commercial furniture and interior carpentry."
+        },
+        {
+          "name": "Fevicol Marine",
+          "description": "Waterproof wood adhesive, 72 hours boiling water resistant.",
+          "pack_sizes": [
+            "1kg",
+            "5kg",
+            "10kg",
+            "20kg",
+            "50kg"
+          ],
+          "application": "Kitchens, bathrooms, outdoor wooden furniture, marine applications."
+        },
+        {
+          "name": "Fevicol HeatX",
+          "description": "Fast-setting heat-resistant contact adhesive, withstands up to 170\u00b0C.",
+          "pack_sizes": [
+            "1L",
+            "5L",
+            "25L"
+          ],
+          "application": "Vertical laminate application, curved surfaces, high-temperature zones."
+        },
+        {
+          "name": "Fevicol ProBond",
+          "description": "Specialized adhesive for bonding PVC/acrylic sheets to MDF/plywood.",
+          "pack_sizes": [
+            "1kg",
+            "5kg",
+            "20kg"
+          ],
+          "application": "Acrylic and PVC sheet lamination in modern modular interiors."
+        }
+      ]
+    },
+    "construction_chemicals": {
+      "display_name": "Pidilite Construction Chemicals & Waterproofing",
+      "target_buyers": [
+        "Civil Contractors",
+        "Builders",
+        "Waterproofing Contractors",
+        "Structural Engineers"
+      ],
+      "products": [
+        {
+          "name": "Dr. Fixit Pidiproof LW+",
+          "description": "Integral liquid waterproofing compound for concrete and mortar.",
+          "pack_sizes": [
+            "1L",
+            "5L",
+            "10L",
+            "20L",
+            "200L"
+          ],
+          "application": "Basements, roof slabs, columns, beams, external plastering."
+        },
+        {
+          "name": "Dr. Fixit Fastflex",
+          "description": "Two-component polymer-modified elastomeric waterproof coating.",
+          "pack_sizes": [
+            "12kg",
+            "24kg kits"
+          ],
+          "application": "Sunken slabs, water tanks, swimming pools, podiums, and terrace waterproofing."
+        },
+        {
+          "name": "Dr. Fixit Raincoat",
+          "description": "High-build elastomeric exterior waterproof wall coating.",
+          "pack_sizes": [
+            "4L",
+            "20L"
+          ],
+          "application": "Exterior facade weatherproofing and crack bridging."
+        }
+      ]
+    },
+    "gypsum_and_ceilings": {
+      "display_name": "Gypsum Boards, Channels & Ceiling Accessories",
+      "target_buyers": [
+        "Interior Contractors",
+        "False Ceiling Specialists",
+        "Commercial Turnkey Fit-out Firms"
+      ],
+      "products": [
+        {
+          "name": "Standard Gypsum Plasterboards",
+          "description": "High-durability 12.5mm and 9.5mm gypsum plasterboards for false ceilings and drywall partitions.",
+          "pack_sizes": [
+            "6x4 ft",
+            "8x4 ft sheets"
+          ],
+          "application": "Acoustic false ceilings, drywalls in commercial offices, showrooms, residences."
+        },
+        {
+          "name": "Ceiling Framework Channels & Perimeter",
+          "description": "GI ceiling sections, intermediate channels, perimeter channels, and drywall studs.",
+          "pack_sizes": [
+            "Standard lengths 3.6m / 12ft"
+          ],
+          "application": "Suspension grid and framing for false ceilings."
+        },
+        {
+          "name": "Jointing Compound & Drywall Accessories",
+          "description": "Ready-mix jointing compound, paper/fiberglass tape, drywall black screws.",
+          "pack_sizes": [
+            "5kg, 20kg buckets",
+            "1000pc boxes"
+          ],
+          "application": "Seamless joint finishing and fixing."
+        }
+      ]
+    },
+    "structural_and_joints": {
+      "display_name": "JSW Expansion Joints & TMT Steel",
+      "target_buyers": [
+        "Infrastructure Contractors",
+        "Civil Builders",
+        "Industrial Warehouse Developers"
+      ],
+      "products": [
+        {
+          "name": "JSW Expansion Joints & Architectural Movement Joints",
+          "description": "Heavy-duty floor and wall expansion joint systems accommodating seismic and thermal movement.",
+          "pack_sizes": [
+            "Custom profiles and linear meters"
+          ],
+          "application": "Malls, hospitals, industrial floors, high-rise podiums, airport terminals."
+        },
+        {
+          "name": "TMT Steel Reinforcement Rods",
+          "description": "High-yield primary steel reinforcement rebars (Fe 500D / 550D).",
+          "pack_sizes": [
+            "8mm to 32mm bundles / metric tons"
+          ],
+          "application": "Foundation, columns, slabs in commercial and residential developments."
+        }
+      ]
+    },
+    "industrial_chemicals_and_solvents": {
+      "display_name": "Industrial Solvents, Resins & Bulk Chemicals",
+      "target_buyers": [
+        "Paint Manufacturers",
+        "Printing Ink Producers",
+        "Pharma API Units",
+        "Chemical Formulators"
+      ],
+      "products": [
+        {
+          "name": "Acetone & IPA (Isopropanol)",
+          "description": "High-purity industrial and pharma grade solvents with manufacturer COA.",
+          "pack_sizes": [
+            "160kg / 200kg drums, tanker loads"
+          ],
+          "application": "Cleaning, solvent formulation, resin thinning, pharma processing."
+        },
+        {
+          "name": "Toluene & Mixed Xylenes",
+          "description": "Aromatic hydrocarbon solvents for coatings, adhesives, and resin manufacturing.",
+          "pack_sizes": [
+            "Drums and bulk tankers"
+          ],
+          "application": "Paints, rubber adhesives, industrial coatings."
+        },
+        {
+          "name": "Ethyl Acetate & Butyl Acetate",
+          "description": "Ester solvents for flexible packaging inks, lacquer, and artificial leather.",
+          "pack_sizes": [
+            "Drums and bulk tankers"
+          ],
+          "application": "Printing packaging, surface coating."
+        }
+      ]
+    },
+    "plywood_and_boards": {
+      "display_name": "Plywood, Marine Ply & Calibrated Boards",
+      "target_buyers": [
+        "Interior Contractors",
+        "Modular Furniture Manufacturers",
+        "Carpentry Workshops",
+        "Architects"
+      ],
+      "products": [
+        {
+          "name": "BWP 710 Marine Grade Plywood",
+          "description": "Boiling Waterproof marine plywood with 100% hardwood core, chemically treated for borer and termite resistance.",
+          "pack_sizes": [
+            "8x4 ft sheets (6mm, 9mm, 12mm, 16mm, 19mm, 25mm)"
+          ],
+          "application": "Modular kitchens, bathroom vanities, exposed woodwork, exterior furnishings."
+        },
+        {
+          "name": "Commercial MR Grade Plywood (IS 303)",
+          "description": "Moisture Resistant commercial plywood bonded with synthetic melamine resin.",
+          "pack_sizes": [
+            "8x4 ft sheets (6mm, 9mm, 12mm, 16mm, 19mm)"
+          ],
+          "application": "Wardrobes, office partitions, wall paneling, ceiling linings, beds."
+        },
+        {
+          "name": "Calibrated Core Plywood",
+          "description": "Super-flat calibrated thickness ply with four-times pressed technology, ideal for seamless laminate/veneer pressing.",
+          "pack_sizes": [
+            "8x4 ft sheets (12mm, 16mm, 19mm)"
+          ],
+          "application": "Precision CNC cutting, high-end modular interior fit-outs."
+        },
+        {
+          "name": "HDHMR & Pre-Laminated Particle Boards",
+          "description": "High Density High Moisture Resistance green boards for heavy-traffic modular interiors.",
+          "pack_sizes": [
+            "8x4 ft sheets (12mm, 18mm)"
+          ],
+          "application": "Office workstations, retail store fixtures, commercial cabinetry."
+        }
+      ]
+    }
+  }
+}

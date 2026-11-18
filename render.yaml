@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: chemkonnect-sales-portal
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.portal:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONIOENCODING
+        value: utf-8
+      - key: INDIAMART_CRM_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chemkonnect-db
+          property: connectionString
+
+databases:
+  - name: chemkonnect-db
+    plan: free
+    databaseName: chemkonnect
+    user: chemkonnect_admin
