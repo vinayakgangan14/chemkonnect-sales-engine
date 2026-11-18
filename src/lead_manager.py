@@ -2,6 +2,8 @@
 import sqlite3
 import csv
 import os
+import json
+from contextlib import contextmanager
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
@@ -18,13 +20,22 @@ if IS_POSTGRES:
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "leads.db")
 SEED_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "seed_leads.json")
 
+@contextmanager
 def get_connection(db_path: str = DB_PATH):
     if IS_POSTGRES:
-        return psycopg2.connect(DATABASE_URL)
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+        conn = psycopg2.connect(DATABASE_URL)
+        try:
+            yield conn
+        finally:
+            conn.close()
+    else:
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        try:
+            yield conn
+        finally:
+            conn.close()
 
 def get_cursor(conn):
     if IS_POSTGRES:
@@ -91,6 +102,7 @@ def init_db(db_path: str = DB_PATH):
 class LeadManager:
     def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
+        self.is_postgres = IS_POSTGRES
         init_db(self.db_path)
         self.auto_seed_if_empty()
 
@@ -101,23 +113,43 @@ class LeadManager:
                 with open(SEED_PATH, "r", encoding="utf-8") as f:
                     seeds = json.load(f)
                 count = 0
-                for s in seeds:
-                    res = self.add_lead(
-                        name=s.get("name", ""),
-                        category=s.get("category", ""),
-                        city=s.get("city", "Mumbai"),
-                        area=s.get("area", ""),
-                        phone=s.get("phone", ""),
-                        email=s.get("email", ""),
-                        address=s.get("address", ""),
-                        source=s.get("source", "Seed"),
-                        deal_tier=s.get("deal_tier"),
-                        estimated_value=s.get("estimated_deal_value")
-                    )
-                    if res:
-                        count += 1
-                        if s.get("pitch_draft"):
-                            self.update_lead(res, status=s.get("status", "Pitched"), pitch_draft=s.get("pitch_draft"))
+                p = q_ph()
+                with get_connection(self.db_path) as conn:
+                    cursor = get_cursor(conn)
+                    for s in seeds:
+                        tier, val = self.calculate_deal_tier(s.get("category", ""), s.get("address", ""))
+                        final_tier = s.get("deal_tier") or tier
+                        final_val = s.get("estimated_deal_value") if s.get("estimated_deal_value") is not None else val
+                        try:
+                            if IS_POSTGRES:
+                                cursor.execute(f"""
+                                    INSERT INTO leads (name, category, city, area, phone, email, address, source, status, pitch_draft, deal_tier, estimated_deal_value)
+                                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                                    ON CONFLICT (name, phone) DO NOTHING
+                                """, (
+                                    s.get("name", "").strip(), s.get("category", "").strip(),
+                                    s.get("city", "Mumbai").strip(), s.get("area", "").strip(),
+                                    s.get("phone", "").strip(), s.get("email", "").strip(),
+                                    s.get("address", "").strip(), s.get("source", "Seed"),
+                                    s.get("status", "Pitched"), s.get("pitch_draft", ""),
+                                    final_tier, final_val
+                                ))
+                            else:
+                                cursor.execute(f"""
+                                    INSERT INTO leads (name, category, city, area, phone, email, address, source, status, pitch_draft, deal_tier, estimated_deal_value)
+                                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                                """, (
+                                    s.get("name", "").strip(), s.get("category", "").strip(),
+                                    s.get("city", "Mumbai").strip(), s.get("area", "").strip(),
+                                    s.get("phone", "").strip(), s.get("email", "").strip(),
+                                    s.get("address", "").strip(), s.get("source", "Seed"),
+                                    s.get("status", "Pitched"), s.get("pitch_draft", ""),
+                                    final_tier, final_val
+                                ))
+                            count += 1
+                        except Exception:
+                            pass
+                    conn.commit()
                 print(f"[✔] Seeded {count} initial enterprise accounts into pipeline.")
         except Exception as e:
             print(f"[!] Seed notice: {e}")
@@ -243,31 +275,41 @@ class LeadManager:
             cursor = get_cursor(conn)
             cursor.execute("SELECT count(*) FROM leads")
             res_total = cursor.fetchone()
-            total = res_total[0] if not IS_POSTGRES else list(res_total.values())[0]
+            if not res_total:
+                total = 0
+            elif isinstance(res_total, dict):
+                total = list(res_total.values())[0] or 0
+            else:
+                total = res_total[0] or 0
             
             cursor.execute("SELECT sum(estimated_deal_value) FROM leads")
             res_sum = cursor.fetchone()
-            sum_val = (res_sum[0] if not IS_POSTGRES else list(res_sum.values())[0]) or 0
+            if not res_sum:
+                sum_val = 0
+            elif isinstance(res_sum, dict):
+                sum_val = list(res_sum.values())[0] or 0
+            else:
+                sum_val = res_sum[0] or 0
             
             cursor.execute("SELECT deal_tier, count(*), sum(estimated_deal_value) FROM leads GROUP BY deal_tier")
             rows = cursor.fetchall()
             by_tier = {}
             for r in rows:
-                if IS_POSTGRES:
+                if isinstance(r, dict):
                     vals = list(r.values())
-                    by_tier[vals[0]] = {"count": vals[1], "value": vals[2]}
+                    by_tier[vals[0] or "Unknown"] = {"count": vals[1] or 0, "value": vals[2] or 0}
                 else:
-                    by_tier[r[0]] = {"count": r[1], "value": r[2]}
+                    by_tier[r[0] or "Unknown"] = {"count": r[1] or 0, "value": r[2] or 0}
 
             cursor.execute("SELECT status, count(*) FROM leads GROUP BY status")
             s_rows = cursor.fetchall()
             by_status = {}
             for r in s_rows:
-                if IS_POSTGRES:
+                if isinstance(r, dict):
                     vals = list(r.values())
-                    by_status[vals[0]] = vals[1]
+                    by_status[vals[0] or "Unknown"] = vals[1] or 0
                 else:
-                    by_status[r[0]] = r[1]
+                    by_status[r[0] or "Unknown"] = r[1] or 0
 
             # Convert pipeline to Crores
             pipeline_crores = round(sum_val / 10000000.0, 2)

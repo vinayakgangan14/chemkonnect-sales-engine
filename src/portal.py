@@ -1,4 +1,4 @@
-﻿# src/portal.py
+# src/portal.py
 """
 Chemkonnect Global - ₹100 Crore B2B AI Sales Portal & Cloud MCP Server
 Runs locally at http://127.0.0.1:5000 and is deployable to Render / Cloud.
@@ -56,49 +56,93 @@ class HarvestRequest(BaseModel):
 class StatusUpdateRequest(BaseModel):
     status: str
 
+@app.get("/api/debug")
+def debug_status():
+    import traceback
+    try:
+        stats = lm.get_stats()
+        sample = lm.get_leads(limit=3)
+        return {
+            "status": "healthy",
+            "is_postgres": lm.is_postgres,
+            "has_db_url": bool(os.environ.get("DATABASE_URL")),
+            "total_leads": stats.get("total_leads"),
+            "pipeline_crores": stats.get("pipeline_value_crores"),
+            "stats": stats,
+            "sample_count": len(sample)
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/api/leads")
 def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier: Optional[str] = None, search: Optional[str] = None):
-    leads = lm.get_leads(category=category, status=status, deal_tier=tier, limit=1000)
-    if search:
-        s = search.lower()
-        leads = [l for l in leads if s in l["name"].lower() or s in l["category"].lower() or s in l["city"].lower() or s in (l["phone"] or "")]
-    
-    for l in leads:
-        loc = f"{l['city']} {l['area'] or ''}"
-        l["priority_zone"] = pitcher.classify_region_priority(loc)
+    try:
+        leads = lm.get_leads(category=category, status=status, deal_tier=tier, limit=1000)
+        if search:
+            s = search.lower()
+            leads = [l for l in leads if s in l["name"].lower() or s in l["category"].lower() or s in l["city"].lower() or s in (l["phone"] or "")]
         
-        pitch_text = l.get("pitch_draft") or ""
-        if "--- WHATSAPP PITCH ---" in pitch_text:
-            parts = pitch_text.split("--- EMAIL PITCH ---")[0].replace("--- WHATSAPP PITCH ---", "").strip()
-        else:
-            parts = pitcher.generate_whatsapp_pitch(l)
+        for l in leads:
+            loc = f"{l['city']} {l['area'] or ''}"
+            l["priority_zone"] = pitcher.classify_region_priority(loc)
             
-        clean_phone = (l.get("phone") or "").replace("+", "").replace(" ", "").replace("-", "")
-        if clean_phone.startswith("0"):
-            clean_phone = "91" + clean_phone[1:]
-        elif len(clean_phone) == 10:
-            clean_phone = "91" + clean_phone
+            pitch_text = l.get("pitch_draft") or ""
+            if "--- WHATSAPP PITCH ---" in pitch_text:
+                parts = pitch_text.split("--- EMAIL PITCH ---")[0].replace("--- WHATSAPP PITCH ---", "").strip()
+            else:
+                parts = pitcher.generate_whatsapp_pitch(l)
+                
+            clean_phone = (l.get("phone") or "").replace("+", "").replace(" ", "").replace("-", "")
+            if clean_phone.startswith("0"):
+                clean_phone = "91" + clean_phone[1:]
+            elif len(clean_phone) == 10:
+                clean_phone = "91" + clean_phone
 
-        l["whatsapp_text"] = parts
-        l["whatsapp_url"] = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(parts)}" if clean_phone else ""
+            l["whatsapp_text"] = parts
+            l["whatsapp_url"] = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(parts)}" if clean_phone else ""
 
-    stats = lm.get_stats()
-    core_count = sum(1 for l in leads if "High Priority" in l["priority_zone"])
-    indiamart_count = sum(1 for l in leads if "IndiaMART" in (l.get("source") or ""))
-    tradeindia_count = sum(1 for l in leads if "TradeIndia" in (l.get("source") or ""))
-    projects_count = sum(1 for l in leads if "MagicBricks" in (l.get("source") or "") or "99acres" in (l.get("source") or "") or "NoBroker" in (l.get("source") or "") or "MahaRERA" in (l.get("source") or ""))
-    giants_count = sum(1 for l in leads if "Giant" in (l.get("source") or "") or "Corporate Fitout" in (l.get("source") or ""))
+        stats = lm.get_stats()
+        core_count = sum(1 for l in leads if "High Priority" in l["priority_zone"])
+        indiamart_count = sum(1 for l in leads if "IndiaMART" in (l.get("source") or ""))
+        tradeindia_count = sum(1 for l in leads if "TradeIndia" in (l.get("source") or ""))
+        projects_count = sum(1 for l in leads if "MagicBricks" in (l.get("source") or "") or "99acres" in (l.get("source") or "") or "NoBroker" in (l.get("source") or "") or "MahaRERA" in (l.get("source") or ""))
+        giants_count = sum(1 for l in leads if "Giant" in (l.get("source") or "") or "Corporate Fitout" in (l.get("source") or ""))
 
-    return {
-        "leads": leads,
-        "total_count": len(leads),
-        "core_belt_count": core_count,
-        "indiamart_count": indiamart_count,
-        "tradeindia_count": tradeindia_count,
-        "projects_count": projects_count,
-        "giants_count": giants_count,
-        "stats": stats
-    }
+        return {
+            "leads": leads,
+            "total_count": len(leads),
+            "core_belt_count": core_count,
+            "indiamart_count": indiamart_count,
+            "tradeindia_count": tradeindia_count,
+            "projects_count": projects_count,
+            "giants_count": giants_count,
+            "stats": stats
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "leads": [],
+            "total_count": 0,
+            "core_belt_count": 0,
+            "indiamart_count": 0,
+            "tradeindia_count": 0,
+            "projects_count": 0,
+            "giants_count": 0,
+            "stats": {
+                "total_leads": 0,
+                "pipeline_value_inr": 0,
+                "pipeline_value_crores": 0.0,
+                "percent_of_100cr_goal": 0.0,
+                "by_tier": {},
+                "by_status": {}
+            },
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @app.post("/api/harvest")
 def harvest_leads(req: HarvestRequest):
