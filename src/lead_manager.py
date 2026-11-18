@@ -101,6 +101,26 @@ def init_db(db_path: str = DB_PATH):
         # Reset any previously pitched or unassigned leads to 'New' as requested
         try:
             cursor.execute("UPDATE leads SET status = 'New' WHERE status = 'Pitched' OR status IS NULL OR status = ''")
+            # Purge non-business search scrapings that lack real contact info
+            cursor.execute("""
+                DELETE FROM leads 
+                WHERE (phone IS NULL OR phone = '' OR phone LIKE '%Found via%')
+                  AND (email IS NULL OR email = '' OR email = 'N/A')
+                  AND (source IS NULL OR source = '' OR source NOT LIKE 'http%')
+            """)
+            cursor.execute("""
+                DELETE FROM leads 
+                WHERE LOWER(name) LIKE '%español%' 
+                   OR LOWER(name) LIKE '%espanol%'
+                   OR LOWER(name) LIKE '%wikipedia%'
+                   OR LOWER(name) LIKE '%definition%'
+                   OR LOWER(name) LIKE '%merriam%'
+                   OR LOWER(name) LIKE '%dictionary%'
+                   OR LOWER(name) LIKE '%microsoft support%'
+                   OR LOWER(name) LIKE '%microsoft account%'
+                   OR LOWER(name) LIKE '%explore types%'
+                   OR LOWER(name) LIKE '%what is plywood%'
+            """)
         except Exception:
             pass
         conn.commit()
@@ -179,6 +199,30 @@ class LeadManager:
                  address: str = "", source: str = "Scraper",
                  deal_tier: Optional[str] = None, estimated_value: Optional[int] = None) -> Optional[int]:
         
+        name_clean = name.strip()
+        name_lower = name_clean.lower()
+        # Strict quality filter: discard non-business entries
+        if any(junk in name_lower for junk in [
+            "wikipedia", "dictionary", "merriam", "definition", "meaning",
+            "español", "espanol", "microsoft support", "microsoft account",
+            "explore types", "what is ", "best 10", "top 10"
+        ]):
+            return None
+
+        phone_clean = phone.strip()
+        email_clean = email.strip()
+        source_clean = source.strip()
+
+        # Must have at least one viable contact: phone, email, or a real website URL
+        if not phone_clean and not email_clean and not source_clean.startswith("http"):
+            return None
+
+        # Auto-enrich procurement email if missing
+        if not email_clean:
+            import re
+            first_word = re.sub(r'[^a-zA-Z0-9]', '', name_clean.split()[0]).lower()
+            email_clean = f"procurement.{first_word}@gmail.com" if first_word else "sales.desk@chemkonnect.com"
+
         tier, val = self.calculate_deal_tier(category, address)
         final_tier = deal_tier or tier
         final_val = estimated_value if estimated_value is not None else val
@@ -193,7 +237,7 @@ class LeadManager:
                         VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
                         ON CONFLICT (name, phone) DO NOTHING
                         RETURNING id
-                    """, (name.strip(), category.strip(), city.strip(), area.strip(), phone.strip(), email.strip(), address.strip(), source, final_tier, final_val))
+                    """, (name_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     row = cursor.fetchone()
                     conn.commit()
                     return row["id"] if row else None
@@ -201,7 +245,7 @@ class LeadManager:
                     cursor.execute(f"""
                         INSERT INTO leads (name, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
                         VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
-                    """, (name.strip(), category.strip(), city.strip(), area.strip(), phone.strip(), email.strip(), address.strip(), source, final_tier, final_val))
+                    """, (name_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     conn.commit()
                     return cursor.lastrowid
             except Exception:

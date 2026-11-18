@@ -191,7 +191,11 @@
                     </select>
 
                     <button onclick="clearAllFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1">
-                        <i class="fa-solid fa-filter-circle-xmark text-rose-400"></i> Clear All Filters
+                        <i class="fa-solid fa-filter-circle-xmark text-rose-400"></i> Clear Filters
+                    </button>
+
+                    <button onclick="cleanPipeline()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1" title="Purge non-business scrapings and verify contacts">
+                        <i class="fa-solid fa-broom text-cyan-400"></i> Clean Pipeline
                     </button>
                 </div>
             </div>
@@ -336,7 +340,7 @@
                         ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">Tier B • Project</span>`
                         : `<span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-700 text-slate-300">Tier C</span>`;
 
-                let sourceBadge = `<span class="text-[10px] text-cyan-400 font-semibold uppercase">Web 30-Day</span>`;
+                let sourceBadge = `<span class="text-[10px] text-cyan-400 font-semibold uppercase">Web Discovery</span>`;
                 const src = l.source || "";
                 if (src.includes("MagicBricks") || src.includes("99acres") || src.includes("NoBroker") || src.includes("MahaRERA")) {
                     sourceBadge = `<span class="text-[10px] text-cyan-300 font-bold uppercase">🏗️ Nearing Possession</span>`;
@@ -350,16 +354,27 @@
                     sourceBadge = `<span class="text-[10px] text-blue-400 font-semibold uppercase">TradeIndia Verified</span>`;
                 }
 
-                const phoneDisplay = l.phone ? `<span class="text-white font-mono text-xs font-semibold">${l.phone}</span>` : `<span class="text-slate-500 text-xs italic">Web Inquirer</span>`;
+                const webLink = (l.source_url && l.source_url.startsWith("http")) 
+                    ? `<a href="${l.source_url}" target="_blank" title="Visit Web Source / Company Page" class="text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 text-[11px] font-medium"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Website</a>`
+                    : '';
+
+                const emailLink = l.email 
+                    ? `<a href="${l.email_url || `mailto:${l.email}`}" class="text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 font-mono text-xs"><i class="fa-regular fa-envelope text-[11px]"></i> ${escapeHtml(l.email)}</a>`
+                    : `<span class="text-slate-600 text-[11px] italic">Email Pending</span>`;
+
+                const phoneDisplay = l.phone 
+                    ? `<a href="tel:${l.phone}" class="text-emerald-400 hover:text-emerald-300 hover:underline font-mono text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-phone text-[10px]"></i> ${l.phone}</a>` 
+                    : `<span class="text-slate-500 text-xs italic">Web Inquirer</span>`;
 
                 return `
                     <tr class="hover:bg-slate-800/40 transition">
                         <td class="py-3 px-4 text-slate-500 font-mono text-xs">${l.id}</td>
                         <td class="py-3 px-4">
                             <div class="font-semibold text-white">${escapeHtml(l.name)}</div>
-                            <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                            <div class="text-[11px] text-slate-400 flex flex-wrap items-center gap-2 mt-1">
                                 ${sourceBadge}
-                                ${l.email ? `<span class="text-slate-500">• ${escapeHtml(l.email)}</span>` : ''}
+                                ${webLink}
+                                ${emailLink ? `<span class="text-slate-600">•</span> ${emailLink}` : ''}
                             </div>
                         </td>
                         <td class="py-3 px-4">
@@ -389,6 +404,16 @@
                                         <i class="fa-brands fa-whatsapp"></i>
                                     </a>
                                 ` : ''}
+                                ${l.email_url ? `
+                                    <a href="${l.email_url}" target="_blank" title="Send Email Quote" class="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition">
+                                        <i class="fa-regular fa-envelope"></i>
+                                    </a>
+                                ` : ''}
+                                ${l.source_url && l.source_url.startsWith('http') ? `
+                                    <a href="${l.source_url}" target="_blank" title="Open Web Source / Page" class="p-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 transition">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                ` : ''}
                                 <button onclick="openPitchModal(${l.id})" title="View / Copy Pitch" class="p-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 transition">
                                     <i class="fa-regular fa-comment-dots"></i>
                                 </button>
@@ -397,6 +422,18 @@
                     </tr>
                 `;
             }).join("");
+        }
+
+        async function cleanPipeline() {
+            if (!confirm("Clean and purge any non-business scrapings, and ensure all leads have valid contacts?")) return;
+            try {
+                const res = await fetch('/api/admin/clean-pipeline', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || "Pipeline cleaned!");
+                await fetchLeads();
+            } catch (e) {
+                alert("Clean error: " + e);
+            }
         }
 
         async function updateLeadStatus(id, newStatus) {

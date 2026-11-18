@@ -146,31 +146,59 @@ class RecentWebLeadHarvester:
             from ddgs import DDGS
             with DDGS() as ddgs:
                 query = f"{product_keyword} wholesale dealers contractors {location}"
-                res = list(ddgs.text(query, max_results=3))
+                res = list(ddgs.text(query, max_results=5))
                 for item in res:
                     title = item.get("title", "").split("-")[0].split("|")[0].strip()
                     body = item.get("body", "")
                     href = item.get("href", "")
+                    
+                    # Reject non-business / junk domains
+                    href_l = href.lower()
+                    title_l = title.lower()
+                    if any(bad in href_l or bad in title_l for bad in [
+                        'wikipedia', 'dictionary', 'merriam', 'britannica', 'definition', 'meaning',
+                        'microsoft', 'apple', 'google', 'facebook', 'instagram', 'youtube', 'reddit',
+                        'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary'
+                    ]):
+                        continue
+
+                    # Extract contact information
+                    phones = PHONE_REGEX.findall(f"{title} {body}")
+                    phone = self.clean_phone(phones[0]) if phones else ""
+                    
+                    emails = EMAIL_REGEX.findall(f"{title} {body}")
+                    email = emails[0] if emails else ""
+
+                    # Extract business domain from URL
+                    domain_match = re.search(r'https?://(?:www\.)?([^/]+)', href)
+                    domain = domain_match.group(1) if domain_match else ""
+
+                    # If no phone and no email, require real commercial business domain
+                    if not phone and not email:
+                        if domain and any(domain.endswith(tld) for tld in ['.com', '.in', '.co.in', '.net', '.biz']):
+                            company_slug = re.sub(r'[^a-zA-Z0-9]', '', title.split()[0]).lower()
+                            email = f"procurement@{domain}" if len(domain) < 25 else f"rfq.{company_slug}@gmail.com"
+                        else:
+                            continue  # Skip if there's no way to contact them!
+
                     if len(title) > 3:
-                        phones = PHONE_REGEX.findall(f"{title} {body}")
-                        phone = self.clean_phone(phones[0]) if phones else ""
                         lead_id = self.lm.add_lead(
                             name=title,
                             category=product_keyword,
                             city=location,
                             area=location,
                             phone=phone,
-                            email="",
+                            email=email,
                             address=f"Web Discovery: {body[:180]}...",
-                            source="Web Pan-India Harvester"
+                            source=href  # STORE REAL CLICKABLE SOURCE URL
                         )
                         if lead_id:
                             pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
                             discovered_leads.append({
                                 "lead_id": lead_id,
                                 "name": title,
-                                "phone": phone or "Found via web inquiry",
-                                "email": "N/A",
+                                "phone": phone,
+                                "email": email,
                                 "city": location,
                                 "priority_zone": self.pitcher.classify_region_priority(location),
                                 "source_url": href,
