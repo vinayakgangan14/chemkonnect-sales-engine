@@ -97,6 +97,12 @@ def init_db(db_path: str = DB_PATH):
                 cursor.execute("ALTER TABLE leads ADD COLUMN deal_tier TEXT DEFAULT 'Tier C - Recurring'")
             if "estimated_deal_value" not in columns:
                 cursor.execute("ALTER TABLE leads ADD COLUMN estimated_deal_value INTEGER DEFAULT 50000")
+        
+        # Reset any previously pitched or unassigned leads to 'New' as requested
+        try:
+            cursor.execute("UPDATE leads SET status = 'New' WHERE status = 'Pitched' OR status IS NULL OR status = ''")
+        except Exception:
+            pass
         conn.commit()
 
 class LeadManager:
@@ -131,7 +137,7 @@ class LeadManager:
                                     s.get("city", "Mumbai").strip(), s.get("area", "").strip(),
                                     s.get("phone", "").strip(), s.get("email", "").strip(),
                                     s.get("address", "").strip(), s.get("source", "Seed"),
-                                    s.get("status", "Pitched"), s.get("pitch_draft", ""),
+                                    "New", s.get("pitch_draft", ""),
                                     final_tier, final_val
                                 ))
                             else:
@@ -143,7 +149,7 @@ class LeadManager:
                                     s.get("city", "Mumbai").strip(), s.get("area", "").strip(),
                                     s.get("phone", "").strip(), s.get("email", "").strip(),
                                     s.get("address", "").strip(), s.get("source", "Seed"),
-                                    s.get("status", "Pitched"), s.get("pitch_draft", ""),
+                                    "New", s.get("pitch_draft", ""),
                                     final_tier, final_val
                                 ))
                             count += 1
@@ -183,8 +189,8 @@ class LeadManager:
             try:
                 if IS_POSTGRES:
                     cursor.execute(f"""
-                        INSERT INTO leads (name, category, city, area, phone, email, address, source, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                        INSERT INTO leads (name, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
                         ON CONFLICT (name, phone) DO NOTHING
                         RETURNING id
                     """, (name.strip(), category.strip(), city.strip(), area.strip(), phone.strip(), email.strip(), address.strip(), source, final_tier, final_val))
@@ -193,8 +199,8 @@ class LeadManager:
                     return row["id"] if row else None
                 else:
                     cursor.execute(f"""
-                        INSERT INTO leads (name, category, city, area, phone, email, address, source, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                        INSERT INTO leads (name, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
                     """, (name.strip(), category.strip(), city.strip(), area.strip(), phone.strip(), email.strip(), address.strip(), source, final_tier, final_val))
                     conn.commit()
                     return cursor.lastrowid
@@ -216,7 +222,7 @@ class LeadManager:
             if deal_tier:
                 query += f" AND deal_tier LIKE {p}"
                 params.append(f"%{deal_tier}%")
-            query += f" ORDER BY estimated_deal_value DESC, id DESC LIMIT {p}"
+            query += f" ORDER BY id DESC, created_at DESC LIMIT {p}"
             params.append(limit)
             cursor.execute(query, params)
             rows = cursor.fetchall()
