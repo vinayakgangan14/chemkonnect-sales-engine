@@ -260,6 +260,8 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 allLeads = data.leads || [];
+                // Guarantee strictly descending order: latest lead at top
+                allLeads.sort((a, b) => (b.id || 0) - (a.id || 0));
 
                 const stats = data.stats || {};
                 const crores = stats.pipeline_value_crores || 6.26;

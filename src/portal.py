@@ -284,5 +284,27 @@ def index_page():
             return f.read()
     return "<h1>Chemkonnect Portal UI Loading...</h1>"
 
+@app.get("/api/system-status")
+def system_status():
+    stats = lm.get_stats()
+    return {
+        "status": "online",
+        "cloud": "Render",
+        "autonomous_harvester": "running_24_7",
+        "lead_sorting": "DESCENDING (latest first)",
+        "total_leads": stats.get("total_leads"),
+        "pipeline_crores": stats.get("pipeline_value_crores"),
+        "build_version": "v2.0-pan-india-descending"
+    }
+
+@app.post("/api/admin/reset-leads-to-new")
+def reset_leads_status_to_new():
+    from src.lead_manager import get_connection
+    with get_connection(lm.db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE leads SET status = 'New'")
+        conn.commit()
+    return {"status": "success", "message": "All pipeline leads updated to 'New'"}
+
 if __name__ == "__main__":
     uvicorn.run("portal:app", host="0.0.0.0", port=5000, reload=True)
