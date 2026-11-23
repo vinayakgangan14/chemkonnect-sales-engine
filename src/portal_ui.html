@@ -190,11 +190,23 @@
                         <option value="Won">Won</option>
                     </select>
 
+                    <select id="filter-age" onchange="renderLeads()" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300 focus:outline-none">
+                        <option value="ALL">⏱️ All Ages (≤ 7 Days)</option>
+                        <option value="0">⚡ Today</option>
+                        <option value="1">⏱️ 1 Day Old</option>
+                        <option value="2">⏱️ 2 Days Old</option>
+                        <option value="3">⏱️ 3 Days Old</option>
+                        <option value="4">⏱️ 4 Days Old</option>
+                        <option value="5">⏱️ 5 Days Old</option>
+                        <option value="6">⏱️ 6 Days Old</option>
+                        <option value="7">⏱️ 7 Days Old</option>
+                    </select>
+
                     <button onclick="clearAllFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1">
                         <i class="fa-solid fa-filter-circle-xmark text-rose-400"></i> Clear Filters
                     </button>
 
-                    <button onclick="cleanPipeline()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1" title="Purge non-business scrapings and verify contacts">
+                    <button onclick="cleanPipeline()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1" title="Purge old leads beyond 7 days and verify contacts">
                         <i class="fa-solid fa-broom text-cyan-400"></i> Clean Pipeline
                     </button>
                 </div>
@@ -207,7 +219,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-800/80 text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-700">
-                            <th class="py-3 px-4">#</th>
+                            <th class="py-3 px-4"># & Lead Age</th>
                             <th class="py-3 px-4">Account & Contact Person</th>
                             <th class="py-3 px-4">Deal Tier & Est. Value</th>
                             <th class="py-3 px-4">Required Materials</th>
@@ -297,6 +309,7 @@
             document.getElementById("search-input").value = "";
             document.getElementById("filter-tier").value = "ALL";
             document.getElementById("filter-status").value = "ALL";
+            if (document.getElementById("filter-age")) document.getElementById("filter-age").value = "ALL";
             fetchLeads();
         }
 
@@ -310,11 +323,16 @@
         function renderLeads() {
             const tierFilter = document.getElementById("filter-tier").value;
             const statusFilter = document.getElementById("filter-status").value;
+            const ageFilter = document.getElementById("filter-age") ? document.getElementById("filter-age").value : "ALL";
             const tbody = document.getElementById("leads-table-body");
 
             let filtered = allLeads.filter(l => {
                 if (tierFilter !== "ALL" && !l.deal_tier.includes(tierFilter)) return false;
                 if (statusFilter !== "ALL" && l.status !== statusFilter) return false;
+                if (ageFilter !== "ALL") {
+                    const targetDays = parseInt(ageFilter);
+                    if ((typeof l.days_old === 'number' ? l.days_old : 0) !== targetDays) return false;
+                }
                 return true;
             });
 
@@ -324,6 +342,20 @@
             }
 
             tbody.innerHTML = filtered.map(l => {
+                const days = (typeof l.days_old === 'number') ? l.days_old : 0;
+                const ageLabel = l.age_label || (days === 0 ? 'Today' : `${days} days old`);
+
+                let ageBadge = '';
+                if (days === 0) {
+                    ageBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" title="Inquiry posted today (${escapeHtml(l.created_at || '')})"><i class="fa-solid fa-bolt text-[9px]"></i> ${escapeHtml(ageLabel)}</span>`;
+                } else if (days === 1) {
+                    ageBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/15 text-teal-300 border border-teal-500/30" title="Inquiry posted 1 day ago (${escapeHtml(l.created_at || '')})"><i class="fa-regular fa-clock text-[9px]"></i> 1 day old</span>`;
+                } else if (days <= 7) {
+                    ageBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30" title="Inquiry posted ${days} days ago (${escapeHtml(l.created_at || '')})"><i class="fa-regular fa-clock text-[9px]"></i> ${days} days old</span>`;
+                } else {
+                    ageBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30" title="Older than 7 days (${escapeHtml(l.created_at || '')})"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> ${days} days old</span>`;
+                }
+
                 const isCore = l.priority_zone.includes("High Priority");
                 const isExport = l.priority_zone.includes("Export");
                 const zoneBadge = isCore 
@@ -368,7 +400,10 @@
 
                 return `
                     <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-3 px-4 text-slate-500 font-mono text-xs">${l.id}</td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <div class="text-slate-500 font-mono text-xs">#${l.id}</div>
+                            <div class="mt-1">${ageBadge}</div>
+                        </td>
                         <td class="py-3 px-4">
                             <div class="font-semibold text-white">${escapeHtml(l.name)}</div>
                             ${l.contact_person ? `<div class="text-xs text-amber-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-user-tie text-[11px] text-amber-400"></i> <span class="font-medium">${escapeHtml(l.contact_person)}</span></div>` : ''}
@@ -571,7 +606,9 @@
             if (!lead) return;
             const contactInfo = lead.contact_person ? ` • <span class="text-amber-300 font-medium">👤 ${escapeHtml(lead.contact_person)}</span>` : '';
             const emailInfo = lead.email ? ` • <span class="text-cyan-300 font-medium">✉️ ${escapeHtml(lead.email)}</span>` : '';
-            document.getElementById("modal-lead-title").innerHTML = `<i class="fa-brands fa-whatsapp text-green-400"></i> ${escapeHtml(lead.name)}${contactInfo}${emailInfo}`;
+            const ageLabel = lead.age_label || (lead.days_old === 0 ? 'Today' : `${lead.days_old} days old`);
+            const ageInfo = ` • <span class="text-emerald-400 font-medium">⏱️ ${escapeHtml(ageLabel)}</span>`;
+            document.getElementById("modal-lead-title").innerHTML = `<i class="fa-brands fa-whatsapp text-green-400"></i> ${escapeHtml(lead.name)}${contactInfo}${emailInfo}${ageInfo}`;
             document.getElementById("modal-pitch-content").innerText = lead.pitch_draft || lead.whatsapp_text || "No pitch generated.";
             
             const waBtn = document.getElementById("modal-wa-btn");

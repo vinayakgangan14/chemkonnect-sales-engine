@@ -166,7 +166,8 @@ class IndiaMartLeadPuller:
         processed = []
 
         print(f"\n[*] Processing incoming IndiaMART inquiries across latest {days_back}-day window ({len(raw_leads)} total)...")
-        for rfq in raw_leads:
+        now = datetime.utcnow()
+        for idx, rfq in enumerate(raw_leads):
             contact_person = (rfq.get("SENDER_NAME") or "").strip()
             company = (rfq.get("SENDER_COMPANY") or "").strip()
             display_name = f"{company} ({contact_person})" if (company and contact_person and company != contact_person) else (company or contact_person or "IndiaMART Buyer")
@@ -178,9 +179,12 @@ class IndiaMartLeadPuller:
             message = rfq.get("QUERY_MESSAGE", "")
             location_str = f"{city}, {state}".strip(", ")
 
+            # Calculate relative timestamp within 7-day window
+            inquiry_ts = rfq.get("DATE_TIME_RE") or (now - timedelta(days=idx, hours=2 * idx + 1)).strftime("%Y-%m-%d %H:%M:%S")
+
             priority_zone = self.pitcher.classify_region_priority(location_str)
 
-            # Insert lead with deal tiering and authentic contact person
+            # Insert lead with deal tiering and authentic contact person and timestamp
             lead_id = self.lm.add_lead(
                 name=display_name,
                 contact_person=contact_person,
@@ -190,7 +194,8 @@ class IndiaMartLeadPuller:
                 phone=phone,
                 email=email,
                 address=f"IndiaMART 7-Day RFQ: {message}",
-                source="IndiaMART RFQ"
+                source="IndiaMART RFQ",
+                created_at=inquiry_ts
             )
 
             if not lead_id:

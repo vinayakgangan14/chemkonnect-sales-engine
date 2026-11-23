@@ -80,9 +80,9 @@ def debug_status():
         }
 
 @app.get("/api/leads")
-def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier: Optional[str] = None, search: Optional[str] = None):
+def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier: Optional[str] = None, search: Optional[str] = None, max_days_old: Optional[int] = 7):
     try:
-        leads = lm.get_leads(category=category, status=status, deal_tier=tier, limit=1000)
+        leads = lm.get_leads(category=category, status=status, deal_tier=tier, max_days_old=max_days_old, limit=1000)
         if search:
             s = search.lower()
             leads = [l for l in leads if s in l["name"].lower() or s in l["category"].lower() or s in l["city"].lower() or s in (l["phone"] or "")]
@@ -239,6 +239,13 @@ async def autonomous_pan_india_hourly_harvester():
         try:
             print("[AUTONOMOUS HARVESTER] Running Pan-India hourly market harvest...")
             try:
+                purged_count = lm.purge_leads_older_than(days=7)
+                if purged_count > 0:
+                    print(f"[7-DAY ROLLING] Purged {purged_count} expired leads older than 7 days.")
+            except Exception as e:
+                print(f"[7-DAY ROLLING NOTICE]: {e}")
+
+            try:
                 project_harvester.harvest_nearing_possession_projects()
             except Exception as e:
                 print(f"[HARVEST NOTICE] Projects: {e}")
@@ -326,6 +333,14 @@ def clean_pipeline():
         from src.lead_manager import get_connection, IS_POSTGRES
     with get_connection(lm.db_path) as conn:
         cursor = conn.cursor()
+        # 0. Strict 7-Day Rolling Enforcement: Purge leads older than 7 days
+        if IS_POSTGRES:
+            cursor.execute("DELETE FROM leads WHERE created_at < NOW() - INTERVAL '7 days'")
+            cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+        else:
+            cursor.execute("DELETE FROM leads WHERE created_at < datetime('now', '-7 days')")
+            cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+
         # 1. Purge non-business scrapings without contact
         cursor.execute("""
             DELETE FROM leads 

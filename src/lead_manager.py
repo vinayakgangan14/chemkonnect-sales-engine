@@ -138,6 +138,13 @@ def init_db(db_path: str = DB_PATH):
                    OR LOWER(name) LIKE '%explore types%'
                    OR LOWER(name) LIKE '%what is plywood%'
             """)
+            # Enforce 7-Day Rolling Window: delete records older than 7 days
+            if IS_POSTGRES:
+                cursor.execute("DELETE FROM leads WHERE created_at < NOW() - INTERVAL '7 days'")
+                cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+            else:
+                cursor.execute("DELETE FROM leads WHERE created_at < datetime('now', '-7 days')")
+                cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
         except Exception:
             pass
         conn.commit()
@@ -215,7 +222,7 @@ class LeadManager:
                  area: str = "", phone: str = "", email: str = "", 
                  address: str = "", source: str = "Scraper",
                  deal_tier: Optional[str] = None, estimated_value: Optional[int] = None,
-                 contact_person: str = "") -> Optional[int]:
+                 contact_person: str = "", created_at: Optional[str] = None) -> Optional[int]:
         
         name_clean = name.strip()
         name_lower = name_clean.lower()
@@ -253,33 +260,123 @@ class LeadManager:
             cursor = get_cursor(conn)
             try:
                 if IS_POSTGRES:
-                    cursor.execute(f"""
-                        INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
-                        ON CONFLICT (name, phone) DO UPDATE SET
-                            contact_person = CASE WHEN EXCLUDED.contact_person != '' THEN EXCLUDED.contact_person ELSE leads.contact_person END,
-                            email = CASE WHEN EXCLUDED.email != '' THEN EXCLUDED.email ELSE leads.email END
-                        RETURNING id
-                    """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
+                    if created_at:
+                        cursor.execute(f"""
+                            INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value, created_at)
+                            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p}, {p})
+                            ON CONFLICT (name, phone) DO UPDATE SET
+                                contact_person = CASE WHEN EXCLUDED.contact_person != '' THEN EXCLUDED.contact_person ELSE leads.contact_person END,
+                                email = CASE WHEN EXCLUDED.email != '' THEN EXCLUDED.email ELSE leads.email END,
+                                created_at = EXCLUDED.created_at
+                            RETURNING id
+                        """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val, created_at))
+                    else:
+                        cursor.execute(f"""
+                            INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
+                            ON CONFLICT (name, phone) DO UPDATE SET
+                                contact_person = CASE WHEN EXCLUDED.contact_person != '' THEN EXCLUDED.contact_person ELSE leads.contact_person END,
+                                email = CASE WHEN EXCLUDED.email != '' THEN EXCLUDED.email ELSE leads.email END
+                            RETURNING id
+                        """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     row = cursor.fetchone()
                     conn.commit()
                     return row["id"] if row else None
                 else:
-                    cursor.execute(f"""
-                        INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
-                    """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
+                    if created_at:
+                        cursor.execute(f"""
+                            INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value, created_at)
+                            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p}, {p})
+                        """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val, created_at))
+                    else:
+                        cursor.execute(f"""
+                            INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
+                        """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     conn.commit()
                     return cursor.lastrowid
             except Exception:
+                if not IS_POSTGRES and created_at:
+                    try:
+                        cursor.execute("UPDATE leads SET created_at = ? WHERE name = ? AND phone = ?", (created_at, name_clean, phone_clean))
+                        conn.commit()
+                    except Exception:
+                        pass
                 return None
 
-    def get_leads(self, category: Optional[str] = None, status: Optional[str] = None, deal_tier: Optional[str] = None, limit: int = 1000) -> List[Dict[str, Any]]:
+    @staticmethod
+    def compute_lead_age(created_at) -> Dict[str, Any]:
+        """
+        Calculates exact age write-up for lead (e.g. 'Today (2 hours old)', '1 day old', '2 days old', '7 days old').
+        """
+        if not created_at:
+            return {"days_old": 0, "age_label": "Today"}
+        
+        dt = None
+        if isinstance(created_at, datetime):
+            dt = created_at
+        elif isinstance(created_at, str):
+            clean_str = created_at.split("+")[0].strip()
+            for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+                try:
+                    dt = datetime.strptime(clean_str, fmt)
+                    break
+                except ValueError:
+                    pass
+        
+        if not dt:
+            return {"days_old": 0, "age_label": "Today"}
+            
+        if dt.tzinfo:
+            dt = dt.replace(tzinfo=None)
+            
+        now = datetime.utcnow()
+        diff = now - dt
+        total_seconds = max(0, diff.total_seconds())
+        days = int(total_seconds // 86400)
+        hours = int((total_seconds % 86400) // 3600)
+        
+        if days == 0:
+            if hours < 1:
+                label = "Today (Just now)"
+            elif hours == 1:
+                label = "Today (1 hour old)"
+            else:
+                label = f"Today ({hours} hours old)"
+        elif days == 1:
+            label = "1 day old"
+        else:
+            label = f"{days} days old"
+            
+        return {"days_old": days, "age_label": label}
+
+    def purge_leads_older_than(self, days: int = 7) -> int:
+        """
+        Enforces strict rolling window: deletes any leads older than `days` days.
+        """
+        with get_connection(self.db_path) as conn:
+            cursor = get_cursor(conn)
+            if self.is_postgres:
+                cursor.execute(f"DELETE FROM leads WHERE created_at < NOW() - INTERVAL '{days} days'")
+            else:
+                cursor.execute(f"DELETE FROM leads WHERE created_at < datetime('now', '-{days} days')")
+            count = cursor.rowcount if hasattr(cursor, 'rowcount') else 0
+            conn.commit()
+            return count
+
+    def get_leads(self, category: Optional[str] = None, status: Optional[str] = None, 
+                  deal_tier: Optional[str] = None, max_days_old: Optional[int] = 7, 
+                  limit: int = 1000) -> List[Dict[str, Any]]:
         p = q_ph()
         with get_connection(self.db_path) as conn:
             cursor = get_cursor(conn)
             query = "SELECT * FROM leads WHERE 1=1"
             params = []
+            if max_days_old is not None:
+                if IS_POSTGRES:
+                    query += f" AND created_at >= NOW() - INTERVAL '{max_days_old} days'"
+                else:
+                    query += f" AND created_at >= datetime('now', '-{max_days_old} days')"
             if category:
                 query += f" AND category LIKE {p}"
                 params.append(f"%{category}%")
@@ -304,6 +401,9 @@ class LeadManager:
                     d["updated_at"] = str(d["updated_at"])
                 if "contact_person" not in d or d["contact_person"] is None:
                     d["contact_person"] = ""
+                age_info = self.compute_lead_age(d.get("created_at"))
+                d["age_label"] = age_info["age_label"]
+                d["days_old"] = age_info["days_old"]
                 result.append(d)
             return result
 
