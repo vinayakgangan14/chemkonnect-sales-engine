@@ -30,7 +30,7 @@ class TitanMailer:
         user = os.environ.get("TITAN_SMTP_USER", "").strip()
         password = os.environ.get("TITAN_SMTP_PASSWORD", "").strip()
         host = os.environ.get("TITAN_SMTP_HOST", "smtp.titan.email").strip()
-        port = int(os.environ.get("TITAN_SMTP_PORT", 465))
+        port = int(os.environ.get("TITAN_SMTP_PORT", 587))
         sender_name = os.environ.get("TITAN_SENDER_NAME", "Chemkonnect Global Sales Desk").strip()
 
         if user and password:
@@ -52,7 +52,7 @@ class TitanMailer:
                             "user": data.get("user", "").strip(),
                             "password": data.get("password", "").strip(),
                             "host": data.get("host", "smtp.titan.email").strip(),
-                            "port": int(data.get("port", 465)),
+                            "port": int(data.get("port", 587)),
                             "sender_name": data.get("sender_name", "Chemkonnect Global Sales Desk").strip(),
                             "source": "file"
                         }
@@ -69,7 +69,7 @@ class TitanMailer:
         }
 
     def save_credentials(self, user: str, password: str, host: str = "smtp.titan.email", 
-                         port: int = 465, sender_name: str = "Chemkonnect Global Sales Desk") -> Dict[str, Any]:
+                         port: int = 587, sender_name: str = "Chemkonnect Global Sales Desk") -> Dict[str, Any]:
         """
         Saves credentials to data/titan_creds.json securely.
         """
@@ -78,7 +78,7 @@ class TitanMailer:
             "user": user.strip(),
             "password": password.strip(),
             "host": host.strip() or "smtp.titan.email",
-            "port": int(port) if port else 465,
+            "port": int(port) if port else 587,
             "sender_name": sender_name.strip() or "Chemkonnect Global Sales Desk"
         }
         with open(self.creds_path, "w", encoding="utf-8") as f:
@@ -86,16 +86,30 @@ class TitanMailer:
 
         return {"status": "success", "message": "Titan Mail credentials saved successfully."}
 
+    def _connect_and_login(self, user: str, password: str, host: str, port: int, timeout: int = 10):
+        if int(port) == 465:
+            server = smtplib.SMTP_SSL(host, int(port), timeout=timeout)
+            server.login(user, password)
+            return server
+        else:
+            server = smtplib.SMTP(host, int(port), timeout=timeout)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(user, password)
+            return server
+
     def test_connection(self, user: Optional[str] = None, password: Optional[str] = None, 
                         host: Optional[str] = None, port: Optional[int] = None) -> Dict[str, Any]:
         """
         Tests SMTP handshake and login authentication against Titan Mail servers.
+        Supports automatic fallback between Port 587 (STARTTLS) and Port 465 (SSL).
         """
         creds = self.get_credentials()
         test_user = user or creds.get("user")
         test_pass = password or creds.get("password")
         test_host = host or creds.get("host", "smtp.titan.email")
-        test_port = port or creds.get("port", 465)
+        req_port = int(port or creds.get("port", 587))
 
         if not test_user or not test_pass:
             return {
@@ -103,34 +117,47 @@ class TitanMailer:
                 "error": "Missing Titan Mail username or password. Please configure them in Settings."
             }
 
-        try:
-            if int(test_port) == 465:
-                with smtplib.SMTP_SSL(test_host, int(test_port), timeout=15) as server:
-                    server.login(test_user, test_pass)
-            else:
-                with smtplib.SMTP(test_host, int(test_port), timeout=15) as server:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
-                    server.login(test_user, test_pass)
+        # Build port order: try requested port first, then fallback to alternate port
+        # (Cloud platforms like Render often drop/timeout port 465, while 587 STARTTLS succeeds)
+        ports_to_try = [req_port]
+        alt_port = 587 if req_port == 465 else 465
+        if alt_port not in ports_to_try:
+            ports_to_try.append(alt_port)
 
-            return {
-                "success": True,
-                "user": test_user,
-                "host": test_host,
-                "port": test_port,
-                "message": f"Successfully authenticated with Titan Mail ({test_user}) via {test_host}:{test_port}"
-            }
-        except smtplib.SMTPAuthenticationError as e:
-            return {
-                "success": False,
-                "error": f"Authentication failed for '{test_user}'. Please check your Titan Mail password or generate an App Password in GoDaddy Titan Webmail. Details: {e.smtp_error.decode() if hasattr(e, 'smtp_error') else str(e)}"
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"Connection to {test_host}:{test_port} failed: {str(e)}"
-            }
+        last_error = ""
+        for p in ports_to_try:
+            try:
+                server = self._connect_and_login(test_user, test_pass, test_host, p, timeout=12)
+                server.quit()
+
+                note = ""
+                if p != req_port:
+                    note = f" (Notice: Port {req_port} timed out due to cloud network restrictions. Automatically switched and connected via Port {p} STARTTLS!)"
+                    # Auto-persist working port
+                    self.save_credentials(test_user, test_pass, host=test_host, port=p, sender_name=creds.get("sender_name", "Chemkonnect Global Sales Desk"))
+
+                return {
+                    "success": True,
+                    "user": test_user,
+                    "host": test_host,
+                    "port": p,
+                    "message": f"Successfully authenticated with Titan Mail ({test_user}) via {test_host}:{p}{note}"
+                }
+            except smtplib.SMTPAuthenticationError as e:
+                # Connected to server, but login credentials rejected
+                return {
+                    "success": False,
+                    "error": f"Connected to {test_host}:{p}, but Titan Mail login failed for '{test_user}'. Please check your password or generate an App Password in GoDaddy Titan Webmail. Details: {e.smtp_error.decode() if hasattr(e, 'smtp_error') else str(e)}"
+                }
+            except Exception as e:
+                last_error = str(e)
+                print(f"[!] Titan test attempt on {test_host}:{p} failed: {e}")
+                continue
+
+        return {
+            "success": False,
+            "error": f"Connection to {test_host} failed on ports {ports_to_try}: {last_error}"
+        }
 
     def get_status(self) -> Dict[str, Any]:
         creds = self.get_credentials()
@@ -148,7 +175,7 @@ class TitanMailer:
             "masked_email": masked_user,
             "sender_name": creds.get("sender_name", "Chemkonnect Global Sales Desk"),
             "host": creds.get("host", "smtp.titan.email"),
-            "port": creds.get("port", 465),
+            "port": creds.get("port", 587),
             "source": creds.get("source", "none")
         }
 
@@ -212,7 +239,7 @@ class TitanMailer:
         user = creds.get("user")
         password = creds.get("password")
         host = creds.get("host", "smtp.titan.email")
-        port = creds.get("port", 465)
+        port = int(creds.get("port", 587))
         sender_name = creds.get("sender_name", "Chemkonnect Global Sales Desk")
 
         if not user or not password:
@@ -243,36 +270,48 @@ class TitanMailer:
         html_part = MIMEText(html_content, "html", "utf-8")
         msg.attach(html_part)
 
-        try:
-            if int(port) == 465:
-                with smtplib.SMTP_SSL(host, int(port), timeout=20) as server:
-                    server.login(user, password)
-                    server.send_message(msg)
-            else:
-                with smtplib.SMTP(host, int(port), timeout=20) as server:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
-                    server.login(user, password)
-                    server.send_message(msg)
+        ports_to_try = [port]
+        alt_port = 587 if port == 465 else 465
+        if alt_port not in ports_to_try:
+            ports_to_try.append(alt_port)
 
-            return {
-                "success": True,
-                "recipient_email": to_clean,
-                "sender_email": user,
-                "subject": subject,
-                "message": f"Email pitch successfully dispatched to {to_clean} via Titan Mail."
-            }
-        except smtplib.SMTPAuthenticationError as e:
-            return {
-                "success": False,
-                "error": f"Titan Mail authentication failed for {user}: {e.smtp_error.decode() if hasattr(e, 'smtp_error') else str(e)}"
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"SMTP Dispatch Error ({host}:{port}): {str(e)}"
-            }
+        last_error = ""
+        for p in ports_to_try:
+            try:
+                if p == 465:
+                    with smtplib.SMTP_SSL(host, p, timeout=15) as server:
+                        server.login(user, password)
+                        server.send_message(msg)
+                else:
+                    with smtplib.SMTP(host, p, timeout=15) as server:
+                        server.ehlo()
+                        server.starttls()
+                        server.ehlo()
+                        server.login(user, password)
+                        server.send_message(msg)
+
+                return {
+                    "success": True,
+                    "recipient_email": to_clean,
+                    "sender_email": user,
+                    "subject": subject,
+                    "port_used": p,
+                    "message": f"Email pitch successfully dispatched to {to_clean} via Titan Mail (port {p})."
+                }
+            except smtplib.SMTPAuthenticationError as e:
+                return {
+                    "success": False,
+                    "error": f"Titan Mail authentication failed for {user}: {e.smtp_error.decode() if hasattr(e, 'smtp_error') else str(e)}"
+                }
+            except Exception as e:
+                last_error = str(e)
+                print(f"[!] Dispatch attempt on port {p} failed: {e}")
+                continue
+
+        return {
+            "success": False,
+            "error": f"SMTP Dispatch Error ({host} on {ports_to_try}): {last_error}"
+        }
 
 if __name__ == "__main__":
     tm = TitanMailer()

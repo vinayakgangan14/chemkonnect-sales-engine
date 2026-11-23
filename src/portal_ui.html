@@ -364,8 +364,10 @@
                         <input id="setting-titan-host" type="text" value="smtp.titan.email" class="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">SMTP Port:</label>
-                        <input id="setting-titan-port" type="number" value="465" class="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">
+                            SMTP Port: <span class="text-[10px] text-cyan-400 font-normal">(587 TLS recommended)</span>
+                        </label>
+                        <input id="setting-titan-port" type="number" value="587" class="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono">
                     </div>
                 </div>
 
@@ -920,7 +922,7 @@
                 const res = await fetch('/api/admin/titan-creds', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user, password: pass, host, port: parseInt(port) || 465, test_now: true })
+                    body: JSON.stringify({ user, password: pass, host, port: parseInt(port) || 587, test_now: true })
                 });
                 const data = await res.json();
                 if (data.status === "success") {
@@ -965,7 +967,7 @@
                         user, 
                         password: pass, 
                         host, 
-                        port: parseInt(port) || 465, 
+                        port: parseInt(port) || 587, 
                         sender_name: name,
                         test_now: !!pass
                     })

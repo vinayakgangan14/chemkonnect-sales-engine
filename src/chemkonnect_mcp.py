@@ -261,7 +261,7 @@ def enrich_lead_contact_details(lead_id: int) -> Dict[str, Any]:
 
 @mcp.tool()
 def configure_titan_mail(email_user: str, email_password: str, host: str = "smtp.titan.email", 
-                        port: int = 465, sender_name: str = "Chemkonnect Global Sales Desk") -> Dict[str, Any]:
+                        port: int = 587, sender_name: str = "Chemkonnect Global Sales Desk") -> Dict[str, Any]:
     """
     Saves and verifies Titan Mail (GoDaddy) credentials for automated direct B2B quote dispatching.
     """

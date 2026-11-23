@@ -63,7 +63,7 @@ class TitanCredsRequest(BaseModel):
     user: str
     password: str
     host: str = "smtp.titan.email"
-    port: int = 465
+    port: int = 587
     sender_name: str = "Chemkonnect Global Sales Desk"
     test_now: bool = True
 
