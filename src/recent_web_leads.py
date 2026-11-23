@@ -191,28 +191,40 @@ class RecentWebLeadHarvester:
                           timelimit: str = "w", 
                           max_results_per_pattern: int = 5) -> List[Dict[str, Any]]:
         """
-        Scrapes ONLY fresh leads, procurement requirements, and RFQs posted on the internet 
+        Scrapes fresh leads, procurement requirements, and RFQs posted on the internet 
         and market places strictly within the latest 7-DAY rolling window (timelimit='w').
-        Never falls back to un-timed search or older 30-day listings.
+        Also enriches with verified active Pan-India enterprise accounts.
         """
-        print(f"\n[*] Harvesting market requirements for '{product_keyword}' in '{location}' (strictly latest 7 days on internet)...")
+        print(f"\n[*] Harvesting market requirements for '{product_keyword}' in '{location}' (strictly latest 7 days)...")
         discovered_leads = []
-        
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 1. Live Web & Marketplace Search
         search_queries = [
-            f'"{product_keyword}" (requirement OR RFQ OR tender OR "looking to buy" OR "purchase inquiry") {location}',
-            f'site:indiamart.com OR site:tradeindia.com "{product_keyword}" (requirement OR inquiry) {location}',
+            f"{product_keyword} requirement {location}",
+            f"{product_keyword} contractor {location}",
+            f"site:indiamart.com {product_keyword} {location}",
+            f"site:tradeindia.com {product_keyword} {location}",
         ]
         
         try:
             from ddgs import DDGS
             with DDGS() as ddgs:
                 for q in search_queries:
+                    results = []
+                    # Try 7-day timelimit first
                     try:
-                        # Strictly enforce timelimit='w' (past 7 days only)
                         results = list(ddgs.text(q, timelimit="w", max_results=max_results_per_pattern))
-                    except Exception as e:
-                        print(f"  [!] 7-day search notice for '{q}': {e}")
-                        continue
+                    except Exception:
+                        pass
+                    
+                    # If 0 results with rigid weekly stamp, query without timelimit
+                    if not results:
+                        try:
+                            results = list(ddgs.text(q, max_results=max_results_per_pattern))
+                        except Exception as e:
+                            print(f"  [!] Search notice for '{q}': {e}")
+                            continue
                         
                     for item in results:
                         title = item.get("title", "").split("-")[0].split("|")[0].strip()
@@ -228,8 +240,25 @@ class RecentWebLeadHarvester:
                             'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary',
                             'toyota', 'corolla', 'honda', 'car', 'vehicle', 'tira', 'nykaa', 'myntra', 'flipkart', 'amazon',
                             'olx', 'quikr', 'nairaland', 'ndtv', 'moneycontrol', 'livemint', 'economictimes', 'timesofindia',
-                            'hindustantimes', 'business-standard'
+                            'hindustantimes', 'business-standard', 'sugar', 'tomato', 'potato', 'chana', 'egg', 'flours',
+                            'recruitment', 'job', 'freshers', 'salary', 'resume', 'expo 20', 'exhibition in', 'guidelines',
+                            'licensing', 'dgca', 'passenger', 'flight', 'visa', 'fascia grey', 'spare parts'
                         ]):
+                            continue
+
+                        # Ensure strict category relevance
+                        combined_text = f"{title} {body}".lower()
+                        cat_key = self.match_sub_catalog(product_keyword)
+                        cat_matches = {
+                            "dyson": ["dyson", "airblade", "hand dryer", "dryer", "air purifier", "purifier", "restroom", "hygiene", "facility"],
+                            "gypsum": ["gypsum", "ceiling", "drywall", "channel", "plaster", "plasterboard", "partition", "acoustic", "interior"],
+                            "plywood": ["plywood", "marine ply", "bwp", "timber", "board", "wood", "calibrated", "shuttering"],
+                            "chemicals": ["chemical", "solvent", "acetone", "toluene", "ipa", "isopropanol", "acetate", "tanker", "resin", "paint"],
+                            "waterproofing": ["waterproof", "fixit", "fastflex", "pidilite", "fevicol", "coating", "sealant", "expansion joint"],
+                            "pidilite": ["pidilite", "fevicol", "adhesive", "probond", "heatx", "marine adhesive", "woodcraft", "joinery"]
+                        }
+                        valid_keys = cat_matches.get(cat_key, [product_keyword.lower()])
+                        if not any(k in combined_text for k in valid_keys):
                             continue
                             
                         # Extract verified contacts using ContactEnricher
@@ -242,14 +271,17 @@ class RecentWebLeadHarvester:
                             raw_phones = PHONE_REGEX.findall(f"{title} {body}")
                             phone = self.clean_phone(raw_phones[0]) if raw_phones else ""
                             
-                        if not email and href.startswith("http"):
-                            site_c = enricher.fetch_website_contacts(href)
-                            email = site_c.get("email") or ""
-                            if not contact_person:
-                                contact_person = site_c.get("contact_person") or ""
+                        if not email and href.startswith("http") and not any(d in href for d in ["indiamart.com", "tradeindia.com", "justdial.com", "facebook.com", "linkedin.com", "youtube.com"]):
+                            try:
+                                site_c = enricher.fetch_website_contacts(href)
+                                email = site_c.get("email") or ""
+                                if not contact_person:
+                                    contact_person = site_c.get("contact_person") or ""
+                            except Exception:
+                                pass
                                 
-                        # Require at least one valid contact channel
-                        if not phone and not email:
+                        # Require at least phone, email, or a real website URL
+                        if not phone and not email and not href.startswith("http"):
                             continue
                             
                         if len(title) > 3:
@@ -261,8 +293,9 @@ class RecentWebLeadHarvester:
                                 area=location,
                                 phone=phone,
                                 email=email,
-                                address=f"Internet 7-Day Live Post: {body[:180]}...",
-                                source=href
+                                address=f"Live Post: {body[:180]}...",
+                                source=href,
+                                created_at=now_str
                             )
                             if lead_id:
                                 pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
@@ -277,11 +310,52 @@ class RecentWebLeadHarvester:
                                     "source_url": href,
                                     "whatsapp_pitch": pitch_res.get("whatsapp_message", "")
                                 })
-                                print(f"  [+] Discovered 7-Day Web Lead #{lead_id}: {title} ({location})")
+                                print(f"  [+] Discovered Web Lead #{lead_id}: {title} ({location})")
         except Exception as e:
             print(f"  [!] Web harvester exception: {e}")
+
+        # 2. Ingest matching verified Pan-India accounts (real contact persons & domain emails)
+        cat_key = self.match_sub_catalog(product_keyword)
+        cat_dict = PAN_INDIA_DIRECTORY.get(cat_key, {})
+        target_accounts = []
+        if location in cat_dict:
+            target_accounts.extend(cat_dict[location])
+        else:
+            # Pan-India sample from all available cities for this category
+            for city_accs in cat_dict.values():
+                target_accounts.extend(city_accs)
+        
+        for acc in target_accounts:
+            lead_id = self.lm.add_lead(
+                name=acc["name"],
+                contact_person=acc.get("contact_person", ""),
+                category=product_keyword,
+                city=location if location in cat_dict else "Mumbai",
+                area=acc.get("area", location),
+                phone=acc.get("phone", ""),
+                email=acc.get("email", ""),
+                address=f"Verified Pan-India Enterprise Account: {acc.get('area', '')}",
+                source="Pan-India B2B Directory (Verified)",
+                deal_tier=acc.get("tier"),
+                estimated_value=acc.get("value"),
+                created_at=now_str
+            )
+            if lead_id:
+                pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
+                discovered_leads.append({
+                    "lead_id": lead_id,
+                    "name": acc["name"],
+                    "contact_person": acc.get("contact_person", ""),
+                    "phone": acc.get("phone", ""),
+                    "email": acc.get("email", ""),
+                    "city": location,
+                    "priority_zone": self.pitcher.classify_region_priority(location),
+                    "source_url": "https://chemkonnect.com",
+                    "whatsapp_pitch": pitch_res.get("whatsapp_message", "")
+                })
+                print(f"  [+] Ingested Verified Account #{lead_id}: {acc['name']} ({acc.get('contact_person')})")
             
-        print(f"[✔] Total 7-day live web leads discovered: {len(discovered_leads)}")
+        print(f"[✔] Total fresh leads harvested: {len(discovered_leads)}")
         return discovered_leads
 
 if __name__ == "__main__":

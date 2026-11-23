@@ -155,6 +155,10 @@
                     <button onclick="triggerTradeIndia()" id="btn-tradeindia" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-industry text-blue-400"></i> TradeIndia
                     </button>
+
+                    <button onclick="triggerHourlyHarvest()" id="btn-force-harvest" class="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt"></i> 🔄 Sync All Pan-India Leads
+                    </button>
                 </div>
             </div>
 
@@ -441,6 +445,16 @@
 
     <!-- Scripting & API Integration -->
     <script>
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         let allLeads = [];
         let searchTimeout = null;
 
@@ -777,7 +791,26 @@
                 alert("Error running lead harvest.");
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Scan Web`;
+                btn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Scan Pan-India`;
+            }
+        }
+
+        async function triggerHourlyHarvest() {
+            const btn = document.getElementById("btn-force-harvest");
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing Pan-India...`;
+            try {
+                const res = await fetch('/api/trigger-hourly-harvest', { method: 'POST' });
+                const data = await res.json();
+                alert("Pan-India Live Market Scan Triggered!\n\nFresh requirements for Dyson, Pidilite, Gypsum, Plywood, Solvents, and Mega Interior Giants are being ingested in the background.");
+                setTimeout(fetchLeads, 3000);
+            } catch (err) {
+                alert("Sync error: " + err);
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> 🔄 Sync All Pan-India Leads`;
+                }, 4000);
             }
         }
 

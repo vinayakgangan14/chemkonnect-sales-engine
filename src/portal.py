@@ -235,21 +235,21 @@ async def autonomous_pan_india_hourly_harvester():
     Runs automatically on Render Cloud every 60 minutes.
     Continuously harvests new B2B requirements across all states of India.
     """
-    await asyncio.sleep(45)
+    await asyncio.sleep(5)
     pan_india_keywords = [
-        ("Dyson Airblade hand dryer requirement", "Mumbai"),
-        ("Dyson commercial air purifier fitout inquiry", "Bangalore"),
-        ("Dyson Airblade 9kJ commercial restroom RFQ", "Delhi NCR"),
-        ("Pidilite Fevicol adhesive bulk requirement", "Gujarat"),
-        ("Dr Fixit Fastflex commercial waterproofing tender", "Delhi NCR"),
-        ("Fevicol ProBond marine adhesive requirement", "Mumbai"),
-        ("Gypsum plasterboard false ceiling contractor RFQ", "Maharashtra"),
-        ("BWP 710 Marine plywood bulk purchase", "Surat"),
-        ("Commercial interior turnkey fitout RFQ", "Bangalore"),
-        ("Drywall false ceiling contractor inquiry", "Hyderabad"),
-        ("JSW architectural expansion joint requirement", "Mumbai"),
-        ("Commercial plywood wholesale requirement", "Chennai"),
-        ("Industrial chemical solvent tanker requirement", "Vapi")
+        ("Dyson Airblade", "Mumbai"),
+        ("Dyson Commercial", "Bangalore"),
+        ("Dyson Airblade", "Delhi NCR"),
+        ("Fevicol Adhesive", "Gujarat"),
+        ("Dr Fixit Fastflex", "Delhi NCR"),
+        ("Pidilite Adhesive", "Mumbai"),
+        ("Gypsum False Ceiling", "Maharashtra"),
+        ("Marine Plywood", "Surat"),
+        ("Commercial Fitout", "Bangalore"),
+        ("Drywall False Ceiling", "Hyderabad"),
+        ("JSW Expansion Joint", "Mumbai"),
+        ("Commercial Plywood", "Chennai"),
+        ("Chemical Solvent", "Vapi")
     ]
     
     while True:
