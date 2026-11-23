@@ -4,10 +4,11 @@ Chemkonnect Global - ₹100 Crore Sales MCP Server
 Connects Antigravity AI agents to:
 - Real Estate Projects Nearing Possession (99acres, MagicBricks, NoBroker, MahaRERA)
 - Turnkey Commercial Interior Giants (Ashish Interbuild, Astitva Interiors, Cherry Hill)
-- 30-Day Multi-platform Lead Harvester (IndiaMART, TradeIndia, Open Web, Tenders)
+- 7-Day Multi-platform Lead Harvester (IndiaMART, TradeIndia, Open Web, Tenders)
 - Deal Tiering & Revenue Pipeline Valuation (Tier A Mega accounts, Tier B Commercial projects)
 - Automated Quotations & WhatsApp Pitches for:
-  Pidilite, Gypsum, Plywood, JSW Expansion Joints, and Industrial Bulk Solvents.
+  Authorized Dealerships: Dyson Commercial Products & Pidilite Adhesives/Chemicals,
+  Gypsum & Ceilings, Plywood, JSW Expansion Joints, and Industrial Bulk Solvents.
 """
 import sys
 import os
@@ -44,8 +45,9 @@ def get_product_catalog(category: Optional[str] = None) -> Dict[str, Any]:
     """
     Get Chemkonnect Global's complete product catalog.
     Available categories:
-    - pidilite_adhesives (Fevicol SH, Marine, HeatX, ProBond)
-    - construction_chemicals (Dr. Fixit LW+, Fastflex, Raincoat)
+    - dyson_commercial_products (Dyson Airblade 9kJ/Wash+Dry/V Hand Dryers, Commercial HEPA Air Purifiers, Supersonic Hair Dryers - Authorized Dealer)
+    - pidilite_adhesives (Fevicol SH, Marine, HeatX, ProBond - Authorized Dealer)
+    - construction_chemicals (Dr. Fixit LW+, Fastflex, Raincoat - Authorized Dealer)
     - gypsum_and_ceilings (Plasterboards, GI Channels, Jointing Compound)
     - plywood_and_boards (BWP 710 Marine Ply, MR Ply, Calibrated Core, HDHMR)
     - structural_and_joints (JSW Expansion Joints, TMT Steel Rods)
@@ -111,9 +113,9 @@ def harvest_recent_web_leads(product_keyword: str, location: str = "Mumbai", tim
     }
 
 @mcp.tool()
-def pull_indiamart_rfqs(days_back: int = 30) -> Dict[str, Any]:
+def pull_indiamart_rfqs(days_back: int = 7) -> Dict[str, Any]:
     """
-    Pulls buyer inquiries from IndiaMART Lead Manager API across a 30-day (1 Month) rolling window.
+    Pulls buyer inquiries from IndiaMART Lead Manager API across a 7-day rolling window.
     """
     processed = indiamart.process_and_save_leads(days_back=days_back)
     csv_file = lm.export_to_csv()

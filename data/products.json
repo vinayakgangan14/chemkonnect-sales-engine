@@ -25,7 +25,7 @@
   },
   "categories": {
     "pidilite_adhesives": {
-      "display_name": "Pidilite Adhesives & Woodworking",
+      "display_name": "Pidilite Adhesives & Woodworking (Authorized Dealer)",
       "target_buyers": [
         "Interior Designers",
         "Modular Kitchen Manufacturers",
@@ -80,7 +80,7 @@
       ]
     },
     "construction_chemicals": {
-      "display_name": "Pidilite Construction Chemicals & Waterproofing",
+      "display_name": "Pidilite Construction Chemicals & Waterproofing (Authorized Dealer)",
       "target_buyers": [
         "Civil Contractors",
         "Builders",
@@ -257,6 +257,49 @@
             "8x4 ft sheets (12mm, 18mm)"
           ],
           "application": "Office workstations, retail store fixtures, commercial cabinetry."
+        }
+      ]
+    },
+    "dyson_commercial_products": {
+      "display_name": "Dyson Commercial & Professional Products (Authorized Dealer)",
+      "target_buyers": [
+        "Corporate Offices & IT Parks",
+        "Grade-A Commercial Developers",
+        "Luxury Hotels & Hospitality Chains",
+        "Turnkey Interior Fit-out Contractors",
+        "MEP & Facility Management Contractors",
+        "Architects & MEP Consultants"
+      ],
+      "products": [
+        {
+          "name": "Dyson Airblade 9kJ Commercial Hand Dryer",
+          "description": "Quiet, HEPA-filtered commercial hand dryer with digital motor V4. Uses 9.1 kilojoules of energy per dry with 10-12 second dry time.",
+          "pack_sizes": ["Single Commercial Unit", "Bulk Master Packs (10+ Units)"],
+          "application": "High-traffic commercial washrooms, corporate headquarters, airports, luxury malls."
+        },
+        {
+          "name": "Dyson Airblade Wash+Dry (Tap & Hand Dryer)",
+          "description": "Airblade technology integrated directly into the water tap. Wash and dry hands at the sink without water dripping on washroom floors.",
+          "pack_sizes": ["Single Unit (Short / Long / Wall-mounted)"],
+          "application": "Executive washrooms, 5-star hotels, high-end restaurant and lounge restrooms."
+        },
+        {
+          "name": "Dyson Airblade V (Quiet Slim Profile)",
+          "description": "Slim 10cm profile ADA-compliant hand dryer, 35% quieter than predecessor with HEPA filter.",
+          "pack_sizes": ["Single Commercial Unit", "Project Multipacks"],
+          "application": "Office buildings, educational institutions, hospitals, commercial healthcare centers."
+        },
+        {
+          "name": "Dyson HEPA Commercial Air Purifier Cool / Formaldehyde",
+          "description": "Commercial-grade HEPA H13 sealed air purification that captures 99.95% of ultrafine particles and destroys formaldehyde.",
+          "pack_sizes": ["Standard Commercial Model", "Tower Model"],
+          "application": "Corporate boardrooms, executive suites, hotel suites, luxury wellness clinics."
+        },
+        {
+          "name": "Dyson Supersonic & Professional Hair Care Range",
+          "description": "Engineered for professional stylists and luxury hospitality with precision airflow and intelligent heat control.",
+          "pack_sizes": ["Professional Edition Kit"],
+          "application": "5-star luxury hotels, boutique resorts, premium commercial salons & spas."
         }
       ]
     }

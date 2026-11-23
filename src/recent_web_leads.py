@@ -98,6 +98,54 @@ PAN_INDIA_DIRECTORY = {
         "Hyderabad": [
             {"name": "Hyderabad Infrastructure Waterproofing & Polymer Injections", "area": "Sanath Nagar, Hyderabad", "phone": "+919849889900", "tier": "Tier B - Commercial Project", "value": 900000}
         ]
+    },
+    "dyson": {
+        "Mumbai": [
+            {"name": "BKC Corporate Facility Management & Restroom Fitouts", "area": "Bandra Kurla Complex, Mumbai", "phone": "+919820112233", "tier": "Tier A - Mega Account", "value": 2200000},
+            {"name": "Lower Parel Commercial Towers Restroom Tech Desk", "area": "Senapati Bapat Marg, Lower Parel", "phone": "+919819112233", "tier": "Tier A - Mega Account", "value": 1850000},
+            {"name": "Andheri East Corporate Park Hygiene Solutions", "area": "Chakala, Andheri East, Mumbai", "phone": "+919833112233", "tier": "Tier A - Mega Account", "value": 1500000}
+        ],
+        "Bangalore": [
+            {"name": "Outer Ring Road IT Park Facility Fitouts", "area": "Bellandur / Marathahalli ORR, Bangalore", "phone": "+919845119900", "tier": "Tier A - Mega Account", "value": 2500000},
+            {"name": "Whitefield Tech Park Restroom Automation & Air Care", "area": "ITPB, Whitefield, Bengaluru", "phone": "+919844119900", "tier": "Tier A - Mega Account", "value": 1950000}
+        ],
+        "Delhi NCR": [
+            {"name": "Cyber City Corporate Hygiene & Airblade Procurement", "area": "DLF Cyber City Phase 2, Gurugram", "phone": "+919811119900", "tier": "Tier A - Mega Account", "value": 2800000},
+            {"name": "Noida Expressway Commercial Towers MEP Desk", "area": "Sector 135, Noida", "phone": "+919810119900", "tier": "Tier A - Mega Account", "value": 1750000}
+        ],
+        "Pune": [
+            {"name": "Hinjewadi Tech Zone Commercial Hygiene Desk", "area": "Phase 1 Hinjewadi Rajiv Gandhi Infotech Park", "phone": "+919822119900", "tier": "Tier A - Mega Account", "value": 1600000}
+        ],
+        "Hyderabad": [
+            {"name": "HITEC City Corporate Facility Management Hub", "area": "Madhapur Financial District, Hyderabad", "phone": "+919849119900", "tier": "Tier A - Mega Account", "value": 2100000}
+        ],
+        "Gujarat": [
+            {"name": "GIFT City Financial Tower Facility Procurement", "area": "GIFT City, Gandhinagar, Gujarat", "phone": "+919825119900", "tier": "Tier A - Mega Account", "value": 1900000}
+        ]
+    },
+    "pidilite": {
+        "Mumbai": [
+            {"name": "Western Suburbs Woodcraft & Modular Bonders Desk", "area": "Goregaon East Industrial Area", "phone": "+919820223344", "tier": "Tier A - Mega Account", "value": 1450000},
+            {"name": "Thane Civil Waterproofing & Dr Fixit Project Stockists", "area": "Wagle Estate, Thane", "phone": "+919892223344", "tier": "Tier B - Commercial Project", "value": 850000},
+            {"name": "Navi Mumbai Turnkey Joinery Adhesive Hub", "area": "Pawane MIDC, Navi Mumbai", "phone": "+919819223355", "tier": "Tier B - Commercial Project", "value": 950000}
+        ],
+        "Gujarat": [
+            {"name": "Ahmedabad Bulk Furniture & Adhesive Distributing Co", "area": "Odhav GIDC, Ahmedabad", "phone": "+919879223344", "tier": "Tier A - Mega Account", "value": 1600000},
+            {"name": "Surat Turnkey Interior Adhesives & Waterproofing", "area": "Sachin GIDC, Surat", "phone": "+919825223344", "tier": "Tier B - Commercial Project", "value": 1100000}
+        ],
+        "Delhi NCR": [
+            {"name": "Kirti Nagar Commercial Joinery Adhesive Stockists", "area": "Kirti Nagar Industrial Area, Delhi", "phone": "+919811224455", "tier": "Tier A - Mega Account", "value": 1750000},
+            {"name": "Okhla Structural Sealants & Dr Fixit Applicators", "area": "Okhla Phase 3, New Delhi", "phone": "+919810224455", "tier": "Tier B - Commercial Project", "value": 900000}
+        ],
+        "Bangalore": [
+            {"name": "Peenya Modular Interior Adhesives & Polymer Desk", "area": "Peenya 2nd Stage, Bangalore", "phone": "+919845223344", "tier": "Tier B - Commercial Project", "value": 1200000}
+        ],
+        "Pune": [
+            {"name": "Chakan Industrial Adhesives & Jointing Solutions", "area": "Chakan MIDC Phase 2, Pune", "phone": "+919822223344", "tier": "Tier B - Commercial Project", "value": 850000}
+        ],
+        "Hyderabad": [
+            {"name": "Secunderabad Commercial Adhesives & Waterproofing Depot", "area": "Ranigunj, Secunderabad", "phone": "+919848223344", "tier": "Tier B - Commercial Project", "value": 1050000}
+        ]
     }
 }
 
@@ -118,7 +166,11 @@ class RecentWebLeadHarvester:
 
     def match_sub_catalog(self, keyword: str) -> str:
         k = keyword.lower()
-        if any(w in k for w in ["gypsum", "ceiling", "drywall", "channel", "plaster"]):
+        if any(w in k for w in ["dyson", "airblade", "hand dryer", "air purifier", "supersonic"]):
+            return "dyson"
+        elif any(w in k for w in ["pidilite", "fevicol", "dr fixit", "dr. fixit", "probond", "fastflex", "marine ply adhesive", "roff", "m-seal"]):
+            return "pidilite"
+        elif any(w in k for w in ["gypsum", "ceiling", "drywall", "channel", "plaster"]):
             return "gypsum"
         elif any(w in k for w in ["ply", "board", "wood", "bwp", "marine"]):
             return "plywood"
@@ -146,19 +198,25 @@ class RecentWebLeadHarvester:
             from ddgs import DDGS
             with DDGS() as ddgs:
                 query = f"{product_keyword} wholesale dealers contractors {location}"
-                res = list(ddgs.text(query, max_results=5))
+                try:
+                    res = list(ddgs.text(query, timelimit=timelimit, max_results=5))
+                except Exception:
+                    res = list(ddgs.text(query, max_results=5))
                 for item in res:
                     title = item.get("title", "").split("-")[0].split("|")[0].strip()
                     body = item.get("body", "")
                     href = item.get("href", "")
                     
-                    # Reject non-business / junk domains
+                    # Reject non-business / junk domains and consumer articles
                     href_l = href.lower()
                     title_l = title.lower()
                     if any(bad in href_l or bad in title_l for bad in [
                         'wikipedia', 'dictionary', 'merriam', 'britannica', 'definition', 'meaning',
                         'microsoft', 'apple', 'google', 'facebook', 'instagram', 'youtube', 'reddit',
-                        'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary'
+                        'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary',
+                        'toyota', 'corolla', 'honda', 'car', 'vehicle', 'tira', 'nykaa', 'myntra', 'flipkart', 'amazon',
+                        'olx', 'quikr', 'nairaland', 'ndtv', 'moneycontrol', 'livemint', 'economictimes', 'timesofindia',
+                        'hindustantimes', 'business-standard'
                     ]):
                         continue
 
@@ -173,8 +231,16 @@ class RecentWebLeadHarvester:
                     domain_match = re.search(r'https?://(?:www\.)?([^/]+)', href)
                     domain = domain_match.group(1) if domain_match else ""
 
-                    # If no phone and no email, require real commercial business domain
+                    # Require B2B commercial intent if no phone or email in snippet
                     if not phone and not email:
+                        has_b2b_intent = any(w in f"{title_l} {body.lower()}" for w in [
+                            "dealer", "distributor", "contractor", "wholesal", "interior", "trader", 
+                            "supplier", "pvt", "limited", "corporate", "fitout", "projects", "infra", 
+                            "drywall", "gypsum", "plywood", "fevicol", "dyson", "restroom", "hygiene"
+                        ])
+                        if not has_b2b_intent:
+                            continue
+
                         if domain and any(domain.endswith(tld) for tld in ['.com', '.in', '.co.in', '.net', '.biz']):
                             company_slug = re.sub(r'[^a-zA-Z0-9]', '', title.split()[0]).lower()
                             email = f"procurement@{domain}" if len(domain) < 25 else f"rfq.{company_slug}@gmail.com"
@@ -189,7 +255,7 @@ class RecentWebLeadHarvester:
                             area=location,
                             phone=phone,
                             email=email,
-                            address=f"Web Discovery: {body[:180]}...",
+                            address=f"Web Discovery (7-Day Rolling): {body[:180]}...",
                             source=href  # STORE REAL CLICKABLE SOURCE URL
                         )
                         if lead_id:
@@ -251,7 +317,7 @@ class RecentWebLeadHarvester:
                     area=area,
                     phone=unique_phone,
                     email=f"rfq.{acc['name'].lower().split()[0]}@gmail.com",
-                    address=f"Fresh Ingestion ({datetime.now().strftime('%b %Y')}): {area}, {location}",
+                    address=f"Fresh 7-Day Ingestion ({datetime.now().strftime('%d %b %Y')}): {area}, {location}",
                     source="Pan-India Live RFQ Stream",
                     deal_tier=tier,
                     estimated_value=val

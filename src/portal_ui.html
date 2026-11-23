@@ -27,7 +27,7 @@
                 <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
                     Chemkonnect Global <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">₹100 Cr Engine</span>
                 </h1>
-                <p class="text-xs text-slate-400">Pidilite • Gypsum • Plywood • JSW Expansion Joints • Industrial Bulk Solvents</p>
+                <p class="text-xs text-slate-400"><span class="text-amber-300 font-semibold">Authorized Dealer:</span> Dyson Commercial & Pidilite • Gypsum • Plywood • JSW Joints • Solvents</p>
             </div>
         </div>
 
@@ -137,7 +137,7 @@
                     </button>
 
                     <button onclick="triggerIndiaMart()" id="btn-indiamart" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> IndiaMART (30d)
+                        <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> IndiaMART (7d Fresh RFQs)
                     </button>
 
                     <button onclick="triggerTradeIndia()" id="btn-tradeindia" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
@@ -156,7 +156,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <input id="harvest-product" type="text" placeholder="Product (Gypsum, Ply)" value="Gypsum board" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 w-40">
+                    <input id="harvest-product" type="text" placeholder="Product (Dyson, Fevicol, Gypsum)" value="Dyson Airblade" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 w-48">
                     
                     <select id="harvest-location" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
                         <option value="India">All India (Pan-India)</option>
@@ -485,17 +485,17 @@
         async function triggerIndiaMart() {
             const btn = document.getElementById("btn-indiamart");
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Pulling 30d...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Pulling 7d...`;
             try {
-                const res = await fetch('/api/indiamart?days_back=30', { method: 'POST' });
+                const res = await fetch('/api/indiamart?days_back=7', { method: 'POST' });
                 const data = await res.json();
-                alert(`Processed ${data.processed_count} IndiaMART inquiries!`);
+                alert(`Processed ${data.processed_count} IndiaMART 7-Day RFQs!`);
                 await fetchLeads();
             } catch (err) {
                 alert("Error fetching IndiaMART inquiries.");
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> IndiaMART (30d)`;
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> IndiaMART (7d Fresh RFQs)`;
             }
         }
 

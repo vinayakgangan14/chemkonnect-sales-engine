@@ -1,7 +1,7 @@
-﻿# src/indiamart_lead_puller.py
+# src/indiamart_lead_puller.py
 """
 IndiaMART Lead Manager & RFQ Auto-Responder for Chemkonnect Global
-Connects to IndiaMART CRM API across a 30-DAY (1 Month) rolling window.
+Connects to IndiaMART CRM API across a 7-DAY rolling window (latest 7 days).
 Prioritizes leads by geography:
 - High Priority: Mumbai, Navi Mumbai, Pune, Gujarat, Maharashtra
 - Global Export / Pan-India
@@ -78,6 +78,28 @@ SAMPLE_INDIAMART_LEADS = [
         "SENDER_STATE": "Maharashtra",
         "QUERY_PRODUCT_NAME": "Acetone & IPA 99.8% Pure (Tanker Load)",
         "QUERY_MESSAGE": "Monthly contract requirement: 2 tankers of IPA and pure acetone with COA to Tarapur MIDC plant."
+    },
+    {
+        "UNIQUE_QUERY_ID": "IM_RFQ_106",
+        "SENDER_NAME": "Vikram Mehta (Prestige Tech Park Corporate Fitouts)",
+        "SENDER_MOBILE": "+919845012399",
+        "SENDER_EMAIL": "facilities@prestigetechfitout.com",
+        "SENDER_COMPANY": "Prestige Commercial Facilities Desk",
+        "SENDER_CITY": "Bangalore",
+        "SENDER_STATE": "Karnataka",
+        "QUERY_PRODUCT_NAME": "Dyson Airblade 9kJ Hand Dryers & HEPA Air Purifiers",
+        "QUERY_MESSAGE": "Requirement for 45 units Dyson Airblade 9kJ commercial hand dryers and 12 HEPA air purifiers for corporate IT tower fitout in Bangalore."
+    },
+    {
+        "UNIQUE_QUERY_ID": "IM_RFQ_107",
+        "SENDER_NAME": "Rohit Singhal (Singhal Turnkey Interiors)",
+        "SENDER_MOBILE": "+919811229988",
+        "SENDER_EMAIL": "procure@singhalinteriors.com",
+        "SENDER_COMPANY": "Singhal Turnkey Infrastructure",
+        "SENDER_CITY": "Noida",
+        "SENDER_STATE": "Uttar Pradesh",
+        "QUERY_PRODUCT_NAME": "Pidilite Fevicol ProBond & Dr. Fixit Fastflex Waterproofing",
+        "QUERY_MESSAGE": "Looking for direct distributor pricing for 120 drums Fevicol ProBond and 80 buckets Dr. Fixit Fastflex for commercial project delivery in Noida Sector 62."
     }
 ]
 
@@ -105,9 +127,9 @@ class IndiaMartLeadPuller:
             json.dump({"glusr_crm_key": crm_key}, f, indent=2)
         print(f"[✔] Stored IndiaMART CRM key in: {CREDS_FILE}")
 
-    def fetch_leads_from_api(self, days_back: int = 30) -> List[Dict[str, Any]]:
+    def fetch_leads_from_api(self, days_back: int = 7) -> List[Dict[str, Any]]:
         """
-        Calls IndiaMART CRM API across a 30-DAY (720 hours) rolling window.
+        Calls IndiaMART CRM API across a 7-DAY (168 hours) rolling window.
         """
         if not self.crm_key:
             print(f"[INFO] Using verified sample IndiaMART RFQ stream for past {days_back} days...")
@@ -135,11 +157,11 @@ class IndiaMartLeadPuller:
             print(f"[!] Error querying IndiaMART API: {e}")
             return []
 
-    def process_and_save_leads(self, days_back: int = 30) -> List[Dict[str, Any]]:
+    def process_and_save_leads(self, days_back: int = 7) -> List[Dict[str, Any]]:
         raw_leads = self.fetch_leads_from_api(days_back=days_back)
         processed = []
 
-        print(f"\n[*] Processing incoming IndiaMART inquiries across 30-day window ({len(raw_leads)} total)...")
+        print(f"\n[*] Processing incoming IndiaMART inquiries across latest {days_back}-day window ({len(raw_leads)} total)...")
         for rfq in raw_leads:
             sender_name = rfq.get("SENDER_NAME") or rfq.get("SENDER_COMPANY") or "IndiaMART Buyer"
             phone = rfq.get("SENDER_MOBILE", "")
@@ -160,7 +182,7 @@ class IndiaMartLeadPuller:
                 area=location_str,
                 phone=phone,
                 email=email,
-                address=f"IndiaMART 30-Day RFQ: {message}",
+                address=f"IndiaMART 7-Day RFQ: {message}",
                 source="IndiaMART RFQ"
             )
 
@@ -178,13 +200,13 @@ class IndiaMartLeadPuller:
                     "city": city,
                     "priority_zone": priority_zone,
                     "inquired_product": product_name,
-                    "instant_whatsapp_reply": pitch_res["whatsapp_message"]
+                    "instant_whatsapp_reply": pitch_res.get("whatsapp_message", "")
                 })
-                print(f"  [+] Ingested 30-Day RFQ #{lead_id} from {sender_name} ({city})")
+                print(f"  [+] Ingested 7-Day RFQ #{lead_id} from {sender_name} ({city})")
 
         return processed
 
 if __name__ == "__main__":
     im = IndiaMartLeadPuller()
-    leads = im.process_and_save_leads(days_back=30)
-    print("Pipeline stats after 30-Day IndiaMART run:", im.lm.get_stats())
+    leads = im.process_and_save_leads(days_back=7)
+    print("Pipeline stats after 7-Day IndiaMART run:", im.lm.get_stats())

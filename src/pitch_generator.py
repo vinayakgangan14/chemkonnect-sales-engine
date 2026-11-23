@@ -25,15 +25,17 @@ class PitchGenerator:
     def match_product_category(self, query_or_category: str) -> str:
         text = query_or_category.lower()
         # Priority order matching: Check specific keywords first
-        if any(k in text for k in ['gypsum', 'false ceiling', 'plasterboard', 'ceiling', 'drywall', 'perimeter channel']):
+        if any(k in text for k in ['dyson', 'airblade', 'hand dryer', 'air purifier', 'supersonic', 'corrale', 'airwrap', 'commercial washroom']):
+            return 'dyson_commercial_products'
+        elif any(k in text for k in ['gypsum', 'false ceiling', 'plasterboard', 'ceiling', 'drywall', 'perimeter channel']):
             return 'gypsum_and_ceilings'
         elif any(k in text for k in ['expansion joint', 'jsw', 'movement joint', 'tmt', 'rebar', 'steel rod']):
             return 'structural_and_joints'
-        elif any(k in text for k in ['dr. fixit', 'fixit', 'waterproof', 'pidiproof', 'fastflex', 'raincoat']):
+        elif any(k in text for k in ['dr. fixit', 'dr fixit', 'fixit', 'waterproof', 'pidiproof', 'fastflex', 'raincoat', 'roff']):
             return 'construction_chemicals'
         elif any(k in text for k in ['plywood', 'marine ply', 'bwp 710', 'mr grade ply', 'calibrated ply', 'hdhmr', 'shuttering ply', 'ply']):
             return 'plywood_and_boards'
-        elif any(k in text for k in ['fevicol', 'adhesive', 'sh', 'marine adhesive', 'heatx', 'probond', 'carpenter', 'modular']):
+        elif any(k in text for k in ['fevicol', 'pidilite', 'adhesive', 'sh', 'marine adhesive', 'heatx', 'probond', 'carpenter', 'modular', 'm-seal', 'mseal']):
             return 'pidilite_adhesives'
         elif any(k in text for k in ['chemical', 'solvent', 'acetone', 'toluene', 'ipa', 'isopropanol', 'acetate', 'resin', 'paint', 'pharma', 'intermediate']):
             return 'industrial_chemicals_and_solvents'
@@ -115,9 +117,9 @@ For your requirements in {city}, we maintain dedicated inventory with rapid logi
 {product_bullets}
 
 Why partner with Chemkonnect Global?
-1. Authorized Direct Distribution: Pidilite adhesives, Dr. Fixit, Certified Plywood (BWP 710/MR), Gypsum ceiling systems, JSW expansion joints, and industrial solvents.
-2. Competitive Bulk Rates: Dedicated price tiers for ongoing contractors, interior fit-outs, and manufacturing units.
-3. Rapid Site Dispatch: Local warehouse inventory ensures zero project downtime.
+1. Authorized Direct Distribution: Dyson Professional commercial systems (Airblade hand dryers, HEPA air purifiers), Pidilite adhesives & chemicals (Fevicol, Dr. Fixit, Roff, M-Seal), Certified Plywood (BWP 710/MR), Gypsum ceiling systems, JSW expansion joints, and industrial bulk solvents.
+2. Competitive Project Tiers: Dedicated contractor wholesale pricing for ongoing turnkey interiors, real estate towers, and commercial fit-outs.
+3. Rapid Site Dispatch: Ready inventory in our Dombivli/Thane hub ensures zero project downtime across India.
 
 Could we share our commercial rate card or prepare a customized quote for your upcoming requirements?
 

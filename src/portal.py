@@ -177,7 +177,7 @@ def harvest_leads(req: HarvestRequest):
     }
 
 @app.post("/api/indiamart")
-def fetch_indiamart(days_back: int = 30):
+def fetch_indiamart(days_back: int = 7):
     leads = indiamart.process_and_save_leads(days_back=days_back)
     return {
         "status": "success",
@@ -220,11 +220,14 @@ async def autonomous_pan_india_hourly_harvester():
     """
     await asyncio.sleep(45)
     pan_india_keywords = [
+        ("Dyson Airblade commercial hand dryer", "Mumbai"),
+        ("Dyson commercial air purifier corporate fitout", "Bangalore"),
+        ("Dyson Airblade 9kJ restrooms", "Delhi NCR"),
+        ("Pidilite Fevicol wholesale distributor", "Gujarat"),
+        ("Dr Fixit Fastflex commercial waterproofing", "Delhi NCR"),
+        ("Fevicol ProBond marine adhesive", "Mumbai"),
         ("Gypsum plasterboard false ceiling", "India"),
         ("BWP 710 Marine plywood", "Maharashtra"),
-        ("Fevicol SH adhesive distributor", "Gujarat"),
-        ("Dr Fixit Fastflex waterproofing", "Delhi NCR"),
-        ("Bulk industrial acetone solvent", "Pan-India"),
         ("Commercial interior fitout contractor", "Bangalore"),
         ("Drywall false ceiling contractor", "Hyderabad"),
         ("JSW expansion joint material", "Mumbai"),
@@ -251,7 +254,7 @@ async def autonomous_pan_india_hourly_harvester():
                 print(f"[HARVEST NOTICE] TradeIndia: {e}")
                 
             try:
-                indiamart.process_and_save_leads(days_back=30)
+                indiamart.process_and_save_leads(days_back=7)
             except Exception as e:
                 print(f"[HARVEST NOTICE] IndiaMART: {e}")
                 

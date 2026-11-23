@@ -188,9 +188,9 @@ class LeadManager:
         - Tier C (Recurring Flow < ₹2L): Fevicol Retail, Carpentry Packs, Routine Maintenance
         """
         combined = f"{category} {query_text}".lower()
-        if any(k in combined for k in ["solvent", "acetone", "toluene", "tanker", "drum", "chemical", "jsw", "expansion joint", "tmt", "rebar", "infrastructure", "tender"]):
+        if any(k in combined for k in ["solvent", "acetone", "toluene", "tanker", "drum", "chemical", "jsw", "expansion joint", "tmt", "rebar", "infrastructure", "tender", "dyson", "airblade", "hand dryer", "air purifier"]):
             return "Tier A - Mega Account", 1500000  # Avg 15 Lakhs
-        elif any(k in combined for k in ["gypsum", "plasterboard", "false ceiling", "plywood", "bwp", "marine ply", "fitout", "commercial interior", "fastflex"]):
+        elif any(k in combined for k in ["gypsum", "plasterboard", "false ceiling", "plywood", "bwp", "marine ply", "fitout", "commercial interior", "fastflex", "pidilite", "fevicol", "dr fixit", "waterproofing"]):
             return "Tier B - Commercial Project", 500000  # Avg 5 Lakhs
         return "Tier C - Recurring Flow", 75000  # Avg 75k
 
