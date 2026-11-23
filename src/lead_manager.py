@@ -8,6 +8,20 @@ from datetime import datetime
 from typing import List, Dict, Optional, Any
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    if os.path.exists(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        os.environ[k.strip()] = v.strip()
+            DATABASE_URL = os.environ.get("DATABASE_URL")
+        except Exception:
+            pass
+
 IS_POSTGRES = bool(DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")))
 
 if IS_POSTGRES:

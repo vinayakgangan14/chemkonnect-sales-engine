@@ -235,7 +235,7 @@ async def autonomous_pan_india_hourly_harvester():
     Runs automatically on Render Cloud every 60 minutes.
     Continuously harvests new B2B requirements across all states of India.
     """
-    await asyncio.sleep(5)
+    await asyncio.sleep(15)
     pan_india_keywords = [
         ("Dyson Airblade", "Mumbai"),
         ("Dyson Commercial", "Bangalore"),
@@ -256,40 +256,40 @@ async def autonomous_pan_india_hourly_harvester():
         try:
             print("[AUTONOMOUS HARVESTER] Running Pan-India hourly market harvest...")
             try:
-                purged_count = lm.purge_leads_older_than(days=7)
+                purged_count = await asyncio.to_thread(lm.purge_leads_older_than, 7)
                 if purged_count > 0:
                     print(f"[7-DAY ROLLING] Purged {purged_count} expired leads older than 7 days.")
             except Exception as e:
                 print(f"[7-DAY ROLLING NOTICE]: {e}")
 
             try:
-                project_harvester.harvest_nearing_possession_projects()
+                await asyncio.to_thread(project_harvester.harvest_nearing_possession_projects)
             except Exception as e:
                 print(f"[HARVEST NOTICE] Projects: {e}")
                 
             try:
-                project_harvester.harvest_commercial_interior_giants()
+                await asyncio.to_thread(project_harvester.harvest_commercial_interior_giants)
             except Exception as e:
                 print(f"[HARVEST NOTICE] Giants: {e}")
                 
             try:
-                tradeindia.harvest_directory()
+                await asyncio.to_thread(tradeindia.harvest_directory)
             except Exception as e:
                 print(f"[HARVEST NOTICE] TradeIndia: {e}")
                 
             try:
-                indiamart.process_and_save_leads(days_back=7)
+                await asyncio.to_thread(indiamart.process_and_save_leads, days_back=7)
             except Exception as e:
                 print(f"[HARVEST NOTICE] IndiaMART: {e}")
                 
             for kw, region in pan_india_keywords:
                 try:
-                    harvester.find_fresh_leads(product_keyword=kw, location=region, timelimit="w")
+                    await asyncio.to_thread(harvester.find_fresh_leads, product_keyword=kw, location=region, timelimit="w")
                 except Exception as e:
                     print(f"[HARVEST NOTICE] {kw} {region}: {e}")
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)
                 
-            stats = lm.get_stats()
+            stats = await asyncio.to_thread(lm.get_stats)
             print(f"[AUTONOMOUS HARVESTER SUCCESS] Pipeline value: ₹{stats.get('pipeline_value_crores')} Cr across {stats.get('total_leads')} accounts.")
         except Exception as e:
             print(f"[AUTONOMOUS HARVESTER ERROR]: {e}")
