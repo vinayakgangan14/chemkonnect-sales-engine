@@ -17,6 +17,10 @@ from typing import Dict, Any, List, Optional
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 from lead_manager import LeadManager
 from pitch_generator import PitchGenerator
 
@@ -26,7 +30,7 @@ CREDS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'i
 SAMPLE_INDIAMART_LEADS = [
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_101",
-        "SENDER_NAME": "Kunal Sharma (Vipul Developers)",
+        "SENDER_NAME": "Kunal Sharma (Procurement Head)",
         "SENDER_MOBILE": "+919821098765",
         "SENDER_EMAIL": "purchase@vipuldev.com",
         "SENDER_COMPANY": "Vipul Developers Pvt Ltd",
@@ -37,7 +41,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_102",
-        "SENDER_NAME": "Mahesh Patel (Gujarat Modular Fitouts)",
+        "SENDER_NAME": "Mahesh Patel (Proprietor)",
         "SENDER_MOBILE": "+919879012345",
         "SENDER_EMAIL": "info@gujaratfitouts.com",
         "SENDER_COMPANY": "Gujarat Modular Furniture Works",
@@ -48,7 +52,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_103",
-        "SENDER_NAME": "Sanjay Deshmukh (Pune Infra Projects)",
+        "SENDER_NAME": "Sanjay Deshmukh (Managing Director)",
         "SENDER_MOBILE": "+919850112244",
         "SENDER_EMAIL": "sanjay@puneinfra.in",
         "SENDER_COMPANY": "Deshmukh Infrastructure",
@@ -59,7 +63,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_104",
-        "SENDER_NAME": "Al-Noor Construction Trading",
+        "SENDER_NAME": "Tariq Al-Mansoor (Purchase Director)",
         "SENDER_MOBILE": "+971501234567",
         "SENDER_EMAIL": "procure@alnoorct.ae",
         "SENDER_COMPANY": "Al-Noor Trading LLC",
@@ -70,7 +74,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_105",
-        "SENDER_NAME": "Aarti Pharma Formulation Labs",
+        "SENDER_NAME": "Dr. Aarti Shah (Plant Procurement Head)",
         "SENDER_MOBILE": "+919820334411",
         "SENDER_EMAIL": "procure@aartipharma.com",
         "SENDER_COMPANY": "Aarti Formulations Ltd",
@@ -81,7 +85,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_106",
-        "SENDER_NAME": "Vikram Mehta (Prestige Tech Park Corporate Fitouts)",
+        "SENDER_NAME": "Vikram Mehta (VP Projects & Facilities)",
         "SENDER_MOBILE": "+919845012399",
         "SENDER_EMAIL": "facilities@prestigetechfitout.com",
         "SENDER_COMPANY": "Prestige Commercial Facilities Desk",
@@ -92,7 +96,7 @@ SAMPLE_INDIAMART_LEADS = [
     },
     {
         "UNIQUE_QUERY_ID": "IM_RFQ_107",
-        "SENDER_NAME": "Rohit Singhal (Singhal Turnkey Interiors)",
+        "SENDER_NAME": "Rohit Singhal (Director)",
         "SENDER_MOBILE": "+919811229988",
         "SENDER_EMAIL": "procure@singhalinteriors.com",
         "SENDER_COMPANY": "Singhal Turnkey Infrastructure",
@@ -163,9 +167,11 @@ class IndiaMartLeadPuller:
 
         print(f"\n[*] Processing incoming IndiaMART inquiries across latest {days_back}-day window ({len(raw_leads)} total)...")
         for rfq in raw_leads:
-            sender_name = rfq.get("SENDER_NAME") or rfq.get("SENDER_COMPANY") or "IndiaMART Buyer"
-            phone = rfq.get("SENDER_MOBILE", "")
-            email = rfq.get("SENDER_EMAIL", "")
+            contact_person = (rfq.get("SENDER_NAME") or "").strip()
+            company = (rfq.get("SENDER_COMPANY") or "").strip()
+            display_name = f"{company} ({contact_person})" if (company and contact_person and company != contact_person) else (company or contact_person or "IndiaMART Buyer")
+            phone = rfq.get("SENDER_MOBILE", "").strip()
+            email = rfq.get("SENDER_EMAIL", "").strip()
             city = rfq.get("SENDER_CITY") or "Maharashtra"
             state = rfq.get("SENDER_STATE") or ""
             product_name = rfq.get("QUERY_PRODUCT_NAME", "Building Materials / Chemicals")
@@ -174,9 +180,10 @@ class IndiaMartLeadPuller:
 
             priority_zone = self.pitcher.classify_region_priority(location_str)
 
-            # Insert lead with deal tiering
+            # Insert lead with deal tiering and authentic contact person
             lead_id = self.lm.add_lead(
-                name=sender_name,
+                name=display_name,
+                contact_person=contact_person,
                 category=product_name,
                 city=city,
                 area=location_str,
@@ -188,21 +195,21 @@ class IndiaMartLeadPuller:
 
             if not lead_id:
                 leads = self.lm.get_leads(limit=200)
-                matching = next((l for l in leads if l['name'] == sender_name and l['phone'] == phone), None)
+                matching = next((l for l in leads if l['name'] == display_name and l['phone'] == phone), None)
                 lead_id = matching['id'] if matching else None
 
             if lead_id:
                 pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
                 processed.append({
                     "lead_id": lead_id,
-                    "buyer_name": sender_name,
+                    "buyer_name": contact_person or display_name,
                     "phone": phone,
                     "city": city,
                     "priority_zone": priority_zone,
                     "inquired_product": product_name,
                     "instant_whatsapp_reply": pitch_res.get("whatsapp_message", "")
                 })
-                print(f"  [+] Ingested 7-Day RFQ #{lead_id} from {sender_name} ({city})")
+                print(f"  [+] Ingested 7-Day RFQ #{lead_id} from {contact_person or display_name} ({city})")
 
         return processed
 

@@ -1,4 +1,4 @@
-﻿# src/tradeindia_scraper.py
+# src/tradeindia_scraper.py
 """
 TradeIndia B2B Buyer & Supplier Directory Ingestor for Chemkonnect Global
 Extracts verified industrial manufacturers, commercial contractors, and material dealers
@@ -12,6 +12,10 @@ from typing import List, Dict, Any, Optional
 
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
+
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 from lead_manager import LeadManager
 from pitch_generator import PitchGenerator

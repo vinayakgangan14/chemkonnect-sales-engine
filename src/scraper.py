@@ -1,4 +1,4 @@
-﻿# src/scraper.py
+# src/scraper.py
 import sys
 import re
 import os
@@ -8,6 +8,10 @@ from typing import List, Dict, Any, Optional
 # Ensure UTF-8 stdout
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
+
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 from lead_manager import LeadManager
 

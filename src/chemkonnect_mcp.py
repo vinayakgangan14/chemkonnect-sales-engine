@@ -209,7 +209,7 @@ def trigger_pan_india_market_harvest(region: str = "Pan-India (All States)") -> 
     project_harvester.harvest_nearing_possession_projects()
     project_harvester.harvest_commercial_interior_giants()
     tradeindia.harvest_directory()
-    indiamart.process_and_save_leads(days_back=30)
+    indiamart.process_and_save_leads(days_back=7)
     stats = lm.get_stats()
     return {
         "status": "success",
@@ -218,6 +218,43 @@ def trigger_pan_india_market_harvest(region: str = "Pan-India (All States)") -> 
         "pipeline_value_crores": stats["pipeline_value_crores"],
         "percent_of_100cr_goal": stats["percent_of_100cr_goal"],
         "pipeline_breakdown": stats
+    }
+
+@mcp.tool()
+def enrich_lead_contact_details(lead_id: int) -> Dict[str, Any]:
+    """
+    Searches the open internet and company web domain to identify the real contact person
+    (Director, Proprietor, Purchase Manager) and verified corporate email for a specific lead.
+    NEVER fabricates fake @gmail.com addresses.
+    """
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        return {"error": f"Lead #{lead_id} not found."}
+    
+    from contact_enricher import ContactEnricher
+    enricher = ContactEnricher()
+    enriched = enricher.enrich_lead(
+        company_name=target["name"],
+        city=target.get("city", "Mumbai"),
+        website_url=target.get("source") if (target.get("source") or "").startswith("http") else ""
+    )
+    
+    if enriched.get("email") or enriched.get("contact_person") or enriched.get("phone"):
+        lm.update_lead(
+            lead_id=lead_id,
+            contact_person=enriched.get("contact_person") or target.get("contact_person"),
+            email=enriched.get("email") or target.get("email"),
+            phone=enriched.get("phone") or target.get("phone")
+        )
+        
+    return {
+        "status": "success",
+        "lead_id": lead_id,
+        "company_name": target["name"],
+        "contact_person": enriched.get("contact_person") or target.get("contact_person", ""),
+        "email": enriched.get("email") or target.get("email", ""),
+        "phone": enriched.get("phone") or target.get("phone", "")
     }
 
 if __name__ == "__main__":

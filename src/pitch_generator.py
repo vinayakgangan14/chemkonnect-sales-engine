@@ -8,6 +8,10 @@ from typing import Dict, Any, Optional
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 from lead_manager import LeadManager
 
 CATALOG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'products.json')
@@ -65,6 +69,8 @@ class PitchGenerator:
         return "Pan-India (All States)"
 
     def generate_whatsapp_pitch(self, lead: Dict[str, Any]) -> str:
+        contact_person = (lead.get('contact_person') or '').strip()
+        salutation = contact_person.split('(')[0].strip() if contact_person else lead.get('name', 'Sir/Madam')
         name = lead.get('name', 'Sir/Madam')
         category = lead.get('category', 'Material Requirements')
         city = lead.get('city') or lead.get('area') or 'Maharashtra'
@@ -74,7 +80,7 @@ class PitchGenerator:
         products_list = matched_cat.get('products', [])
         product_highlights = "\n".join([f"• *{p['name']}*: {p['description']}" for p in products_list[:2]])
 
-        whatsapp_text = f"""Hello {name},
+        whatsapp_text = f"""Hello {salutation},
 
 Greetings from *Chemkonnect Global* (Dombivli / Thane).
 
@@ -95,6 +101,8 @@ Best regards,
         return whatsapp_text
 
     def generate_email_pitch(self, lead: Dict[str, Any]) -> Dict[str, str]:
+        contact_person = (lead.get('contact_person') or '').strip()
+        salutation = contact_person.split('(')[0].strip() if contact_person else f"{lead.get('name', 'Business Owner')} Team"
         name = lead.get('name', 'Business Owner')
         category = lead.get('category', 'Valued Partner')
         city = lead.get('city') or lead.get('area') or 'Maharashtra'
@@ -106,7 +114,7 @@ Best regards,
 
         subject = f"B2B Material Supply & Distributor Pricing for {name} ({city})"
         
-        body = f"""Dear {name} Team,
+        body = f"""Dear {salutation},
 
 I hope this message finds you well.
 

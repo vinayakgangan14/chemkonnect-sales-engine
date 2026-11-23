@@ -53,6 +53,7 @@ def init_db(db_path: str = DB_PATH):
                 CREATE TABLE IF NOT EXISTS leads (
                     id SERIAL PRIMARY KEY,
                     name TEXT NOT NULL,
+                    contact_person TEXT DEFAULT '',
                     category TEXT NOT NULL,
                     city TEXT DEFAULT 'Thane',
                     area TEXT,
@@ -69,11 +70,16 @@ def init_db(db_path: str = DB_PATH):
                     UNIQUE(name, phone)
                 )
             """)
+            try:
+                cursor.execute("ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_person TEXT DEFAULT '';")
+            except Exception:
+                pass
         else:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS leads (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
+                    contact_person TEXT DEFAULT '',
                     category TEXT NOT NULL,
                     city TEXT DEFAULT 'Thane',
                     area TEXT,
@@ -93,6 +99,8 @@ def init_db(db_path: str = DB_PATH):
             # Check if columns exist in case table was created earlier
             cursor.execute("PRAGMA table_info(leads)")
             columns = [row["name"] for row in cursor.fetchall()]
+            if "contact_person" not in columns:
+                cursor.execute("ALTER TABLE leads ADD COLUMN contact_person TEXT DEFAULT ''")
             if "deal_tier" not in columns:
                 cursor.execute("ALTER TABLE leads ADD COLUMN deal_tier TEXT DEFAULT 'Tier C - Recurring'")
             if "estimated_deal_value" not in columns:
@@ -101,6 +109,15 @@ def init_db(db_path: str = DB_PATH):
         # Reset any previously pitched or unassigned leads to 'New' as requested
         try:
             cursor.execute("UPDATE leads SET status = 'New' WHERE status = 'Pitched' OR status IS NULL OR status = ''")
+            # Purge fake generic generated emails
+            cursor.execute("""
+                UPDATE leads 
+                SET email = '' 
+                WHERE email LIKE 'procurement.%@gmail.com' 
+                   OR email LIKE 'rfq.%@gmail.com' 
+                   OR email = 'N/A' 
+                   OR email = 'sales.desk@chemkonnect.com'
+            """)
             # Purge non-business search scrapings that lack real contact info
             cursor.execute("""
                 DELETE FROM leads 
@@ -197,7 +214,8 @@ class LeadManager:
     def add_lead(self, name: str, category: str, city: str = "Thane", 
                  area: str = "", phone: str = "", email: str = "", 
                  address: str = "", source: str = "Scraper",
-                 deal_tier: Optional[str] = None, estimated_value: Optional[int] = None) -> Optional[int]:
+                 deal_tier: Optional[str] = None, estimated_value: Optional[int] = None,
+                 contact_person: str = "") -> Optional[int]:
         
         name_clean = name.strip()
         name_lower = name_clean.lower()
@@ -211,17 +229,20 @@ class LeadManager:
 
         phone_clean = phone.strip()
         email_clean = email.strip()
+        contact_person_clean = contact_person.strip()
         source_clean = source.strip()
+
+        # Discard fabricated generic emails
+        if email_clean.startswith("procurement.") and email_clean.endswith("@gmail.com"):
+            email_clean = ""
+        if email_clean.startswith("rfq.") and email_clean.endswith("@gmail.com"):
+            email_clean = ""
+        if email_clean == "sales.desk@chemkonnect.com":
+            email_clean = ""
 
         # Must have at least one viable contact: phone, email, or a real website URL
         if not phone_clean and not email_clean and not source_clean.startswith("http"):
             return None
-
-        # Auto-enrich procurement email if missing
-        if not email_clean:
-            import re
-            first_word = re.sub(r'[^a-zA-Z0-9]', '', name_clean.split()[0]).lower()
-            email_clean = f"procurement.{first_word}@gmail.com" if first_word else "sales.desk@chemkonnect.com"
 
         tier, val = self.calculate_deal_tier(category, address)
         final_tier = deal_tier or tier
@@ -233,19 +254,21 @@ class LeadManager:
             try:
                 if IS_POSTGRES:
                     cursor.execute(f"""
-                        INSERT INTO leads (name, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
-                        ON CONFLICT (name, phone) DO NOTHING
+                        INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
+                        ON CONFLICT (name, phone) DO UPDATE SET
+                            contact_person = CASE WHEN EXCLUDED.contact_person != '' THEN EXCLUDED.contact_person ELSE leads.contact_person END,
+                            email = CASE WHEN EXCLUDED.email != '' THEN EXCLUDED.email ELSE leads.email END
                         RETURNING id
-                    """, (name_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
+                    """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     row = cursor.fetchone()
                     conn.commit()
                     return row["id"] if row else None
                 else:
                     cursor.execute(f"""
-                        INSERT INTO leads (name, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
-                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
-                    """, (name_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
+                        INSERT INTO leads (name, contact_person, category, city, area, phone, email, address, source, status, deal_tier, estimated_deal_value)
+                        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, 'New', {p}, {p})
+                    """, (name_clean, contact_person_clean, category.strip(), city.strip(), area.strip(), phone_clean, email_clean, address.strip(), source_clean, final_tier, final_val))
                     conn.commit()
                     return cursor.lastrowid
             except Exception:
@@ -279,10 +302,14 @@ class LeadManager:
                     d["created_at"] = str(d["created_at"])
                 if d.get("updated_at") is not None:
                     d["updated_at"] = str(d["updated_at"])
+                if "contact_person" not in d or d["contact_person"] is None:
+                    d["contact_person"] = ""
                 result.append(d)
             return result
 
-    def update_lead(self, lead_id: int, status: Optional[str] = None, pitch_draft: Optional[str] = None, deal_tier: Optional[str] = None, estimated_value: Optional[int] = None) -> bool:
+    def update_lead(self, lead_id: int, status: Optional[str] = None, pitch_draft: Optional[str] = None, 
+                    deal_tier: Optional[str] = None, estimated_value: Optional[int] = None,
+                    contact_person: Optional[str] = None, email: Optional[str] = None, phone: Optional[str] = None) -> bool:
         p = q_ph()
         with get_connection(self.db_path) as conn:
             cursor = get_cursor(conn)
@@ -300,6 +327,15 @@ class LeadManager:
             if estimated_value is not None:
                 updates.append(f"estimated_deal_value = {p}")
                 params.append(estimated_value)
+            if contact_person is not None:
+                updates.append(f"contact_person = {p}")
+                params.append(contact_person.strip())
+            if email is not None:
+                updates.append(f"email = {p}")
+                params.append(email.strip())
+            if phone is not None:
+                updates.append(f"phone = {p}")
+                params.append(phone.strip())
             if not updates:
                 return False
             updates.append(f"updated_at = {p}")
@@ -320,7 +356,7 @@ class LeadManager:
 
         leads = self.get_leads(limit=2000)
         if not leads:
-            fieldnames = ["id", "name", "category", "city", "area", "phone", "email", "address", "source", "status", "deal_tier", "estimated_deal_value", "pitch_draft", "created_at", "updated_at"]
+            fieldnames = ["id", "name", "contact_person", "category", "city", "area", "phone", "email", "address", "source", "status", "deal_tier", "estimated_deal_value", "pitch_draft", "created_at", "updated_at"]
         else:
             fieldnames = list(leads[0].keys())
 

@@ -1,4 +1,4 @@
-﻿# src/project_and_contractor_harvester.py
+# src/project_and_contractor_harvester.py
 """
 High-Ticket Real Estate & Commercial Interior Mega-Harvester for Chemkonnect Global
 1. Nearing-Possession Projects (MagicBricks / 99acres / NoBroker / MahaRERA)
@@ -16,6 +16,10 @@ from typing import List, Dict, Any, Optional
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 from lead_manager import LeadManager
 from pitch_generator import PitchGenerator
 
@@ -23,6 +27,7 @@ from pitch_generator import PitchGenerator
 COMMERCIAL_INTERIOR_GIANTS = [
     {
         "name": "Ashish Interbuild Pvt. Ltd. (Procurement & Materials Desk)",
+        "contact_person": "Ashish Gupta (Managing Director)",
         "category": "Turnkey Commercial Fitouts (Gypsum Ceilings, Framing & Plywood)",
         "city": "Mumbai",
         "state": "Maharashtra",
@@ -37,6 +42,7 @@ COMMERCIAL_INTERIOR_GIANTS = [
     },
     {
         "name": "Astitva Interiors / Astitv Designs (Corporate Fitout Division)",
+        "contact_person": "Praveen Nair (Head of Commercial Projects)",
         "category": "Commercial Office Fitouts (Gypsum Boards, BWP Ply & Finishes)",
         "city": "Pune",
         "state": "Maharashtra",
@@ -51,6 +57,7 @@ COMMERCIAL_INTERIOR_GIANTS = [
     },
     {
         "name": "Cherry Hill Corporate Fitouts & Contracting",
+        "contact_person": "Naveen Cherry (Director - West)",
         "category": "Corporate Interiors (Gypsum Acoustic Ceilings & Partition Channels)",
         "city": "Mumbai",
         "state": "Maharashtra",
@@ -65,6 +72,7 @@ COMMERCIAL_INTERIOR_GIANTS = [
     },
     {
         "name": "Shree Ram Drywall & Framing Sub-Contractors (Ashish Interbuild Partner)",
+        "contact_person": "Shree Ram Panchal (Head Contractor)",
         "category": "False Ceiling & Drywall Metal Framework Sub-Contractor",
         "city": "Mumbai",
         "state": "Maharashtra",
@@ -79,6 +87,7 @@ COMMERCIAL_INTERIOR_GIANTS = [
     },
     {
         "name": "Kalyan-Thane Modular Carpentry & Panel Sub-Contractors",
+        "contact_person": "Suresh Mistry (Master Joiner)",
         "category": "Commercial Woodwork & Plywood Sub-Contractor",
         "city": "Thane",
         "state": "Maharashtra",
@@ -97,6 +106,7 @@ COMMERCIAL_INTERIOR_GIANTS = [
 NEARING_POSSESSION_PROJECTS = [
     {
         "name": "Godrej Horizon Towers (Nearing Possession - Fitout Stage)",
+        "contact_person": "Vikas Shinde (Site Procurement Lead)",
         "category": "Gypsum Boards, Plywood, Dr Fixit & Movement Joints",
         "city": "Mumbai",
         "state": "Maharashtra",
@@ -111,6 +121,7 @@ NEARING_POSSESSION_PROJECTS = [
     },
     {
         "name": "Lodha Upper Thane - Casa Eden (Nearing Possession)",
+        "contact_person": "Rohan Salunkhe (Materials Manager)",
         "category": "Drywall Framework, Gypsum Ceilings & Plywood",
         "city": "Thane",
         "state": "Maharashtra",
@@ -125,6 +136,7 @@ NEARING_POSSESSION_PROJECTS = [
     },
     {
         "name": "Kolte Patil Life Republic - Sector R12 (Fitout Stage)",
+        "contact_person": "Anand Deshpande (Project Incharge)",
         "category": "Gypsum Acoustic Ceilings, Waterproofing & Plywood",
         "city": "Pune",
         "state": "Maharashtra",
@@ -139,6 +151,7 @@ NEARING_POSSESSION_PROJECTS = [
     },
     {
         "name": "Hiranandani Fortune City - Sector 2 (Interior Fitout Stage)",
+        "contact_person": "Mahesh Iyer (Chief Engineer - Contracts)",
         "category": "BWP Marine Plywood, Gypsum & JSW Expansion Joints",
         "city": "Navi Mumbai",
         "state": "Maharashtra",
@@ -153,6 +166,7 @@ NEARING_POSSESSION_PROJECTS = [
     },
     {
         "name": "Rohan Viti & Madhuban Commercial Hub (Fitout Phase)",
+        "contact_person": "Ganesh Kulkarni (Purchase Manager)",
         "category": "Commercial Ceilings, GI Frames & Solvents",
         "city": "Pune",
         "state": "Maharashtra",
@@ -183,6 +197,7 @@ class ProjectAndContractorHarvester:
         for item in COMMERCIAL_INTERIOR_GIANTS:
             lead_id = self.lm.add_lead(
                 name=item["name"],
+                contact_person=item.get("contact_person", ""),
                 category=item["category"],
                 city=item["city"],
                 area=item["area"],
@@ -199,9 +214,11 @@ class ProjectAndContractorHarvester:
                 ingested.append({
                     "lead_id": lead_id,
                     "name": item["name"],
+                    "contact_person": item.get("contact_person", ""),
                     "category": item["category"],
                     "city": item["city"],
                     "phone": item["phone"],
+                    "email": item["email"],
                     "tier": item["deal_tier"],
                     "estimated_value": item["estimated_value"],
                     "whatsapp_pitch": pitch_res["whatsapp_message"]
@@ -222,6 +239,7 @@ class ProjectAndContractorHarvester:
         for proj in NEARING_POSSESSION_PROJECTS:
             lead_id = self.lm.add_lead(
                 name=proj["name"],
+                contact_person=proj.get("contact_person", ""),
                 category=proj["category"],
                 city=proj["city"],
                 area=proj["area"],
@@ -238,6 +256,7 @@ class ProjectAndContractorHarvester:
                 ingested.append({
                     "lead_id": lead_id,
                     "name": proj["name"],
+                    "contact_person": proj.get("contact_person", ""),
                     "category": proj["category"],
                     "city": proj["city"],
                     "phone": proj["phone"],

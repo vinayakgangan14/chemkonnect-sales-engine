@@ -208,11 +208,11 @@
                     <thead>
                         <tr class="bg-slate-800/80 text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-700">
                             <th class="py-3 px-4">#</th>
-                            <th class="py-3 px-4">Account / Project Name</th>
+                            <th class="py-3 px-4">Account & Contact Person</th>
                             <th class="py-3 px-4">Deal Tier & Est. Value</th>
                             <th class="py-3 px-4">Required Materials</th>
                             <th class="py-3 px-4">Location & Zone</th>
-                            <th class="py-3 px-4">Contact Phone</th>
+                            <th class="py-3 px-4">Contact Phone & Real Email</th>
                             <th class="py-3 px-4">Status</th>
                             <th class="py-3 px-4 text-right">Actions</th>
                         </tr>
@@ -358,9 +358,9 @@
                     ? `<a href="${l.source_url}" target="_blank" title="Visit Web Source / Company Page" class="text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 text-[11px] font-medium"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Website</a>`
                     : '';
 
-                const emailLink = l.email 
-                    ? `<a href="${l.email_url || `mailto:${l.email}`}" class="text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 font-mono text-xs"><i class="fa-regular fa-envelope text-[11px]"></i> ${escapeHtml(l.email)}</a>`
-                    : `<span class="text-slate-600 text-[11px] italic">Email Pending</span>`;
+                const emailDisplay = l.email 
+                    ? `<a href="${l.email_url || `mailto:${l.email}`}" class="text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 font-mono text-xs truncate max-w-[210px]" title="${escapeHtml(l.email)}"><i class="fa-regular fa-envelope text-[11px] text-cyan-400"></i> ${escapeHtml(l.email)}</a>`
+                    : `<span class="text-slate-500 text-[11px] italic flex items-center gap-1"><i class="fa-regular fa-circle-xmark text-slate-600"></i> No Email Captured</span>`;
 
                 const phoneDisplay = l.phone 
                     ? `<a href="tel:${l.phone}" class="text-emerald-400 hover:text-emerald-300 hover:underline font-mono text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-phone text-[10px]"></i> ${l.phone}</a>` 
@@ -371,10 +371,10 @@
                         <td class="py-3 px-4 text-slate-500 font-mono text-xs">${l.id}</td>
                         <td class="py-3 px-4">
                             <div class="font-semibold text-white">${escapeHtml(l.name)}</div>
+                            ${l.contact_person ? `<div class="text-xs text-amber-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-user-tie text-[11px] text-amber-400"></i> <span class="font-medium">${escapeHtml(l.contact_person)}</span></div>` : ''}
                             <div class="text-[11px] text-slate-400 flex flex-wrap items-center gap-2 mt-1">
                                 ${sourceBadge}
                                 ${webLink}
-                                ${emailLink ? `<span class="text-slate-600">•</span> ${emailLink}` : ''}
                             </div>
                         </td>
                         <td class="py-3 px-4">
@@ -388,7 +388,12 @@
                             <div class="text-xs text-slate-300 font-medium">${escapeHtml(l.city)}</div>
                             <div class="mt-1">${zoneBadge}</div>
                         </td>
-                        <td class="py-3 px-4">${phoneDisplay}</td>
+                        <td class="py-3 px-4">
+                            <div class="space-y-1">
+                                <div>${phoneDisplay}</div>
+                                <div>${emailDisplay}</div>
+                            </div>
+                        </td>
                         <td class="py-3 px-4">
                             <select onchange="updateLeadStatus(${l.id}, this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-2 py-1 text-slate-200 focus:outline-none">
                                 <option value="New" ${l.status === 'New' ? 'selected' : ''}>New</option>
@@ -399,6 +404,9 @@
                         </td>
                         <td class="py-3 px-4 text-right">
                             <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="enrichLead(${l.id})" title="Search & Verify Real Email / Contact Person" class="p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition">
+                                    <i class="fa-solid fa-id-card-clip"></i>
+                                </button>
                                 ${l.whatsapp_url ? `
                                     <a href="${l.whatsapp_url}" target="_blank" title="Send WhatsApp Message" class="p-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 transition">
                                         <i class="fa-brands fa-whatsapp"></i>
@@ -433,6 +441,25 @@
                 await fetchLeads();
             } catch (e) {
                 alert("Clean error: " + e);
+            }
+        }
+
+        async function enrichLead(id) {
+            try {
+                const btn = event.currentTarget;
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400"></i>`;
+                const res = await fetch(`/api/leads/${id}/enrich-contact`, { method: 'POST' });
+                const data = await res.json();
+                btn.innerHTML = origHtml;
+                if (data.updated) {
+                    alert(`Verified Contact Details Found!\n\n👤 Contact Person: ${data.contact_person || 'Company Procurement Desk'}\n✉️ Real Email: ${data.email || 'None'}\n📞 Phone: ${data.phone || 'None'}`);
+                    await fetchLeads();
+                } else {
+                    alert(`No new public email found online for Lead #${id}. Current contacts remain active.`);
+                }
+            } catch (err) {
+                alert("Enrichment error: " + err);
             }
         }
 
@@ -542,8 +569,9 @@
         function openPitchModal(leadId) {
             const lead = allLeads.find(l => l.id === leadId);
             if (!lead) return;
-
-            document.getElementById("modal-lead-title").innerHTML = `<i class="fa-brands fa-whatsapp text-green-400"></i> Pitch for ${escapeHtml(lead.name)}`;
+            const contactInfo = lead.contact_person ? ` • <span class="text-amber-300 font-medium">👤 ${escapeHtml(lead.contact_person)}</span>` : '';
+            const emailInfo = lead.email ? ` • <span class="text-cyan-300 font-medium">✉️ ${escapeHtml(lead.email)}</span>` : '';
+            document.getElementById("modal-lead-title").innerHTML = `<i class="fa-brands fa-whatsapp text-green-400"></i> ${escapeHtml(lead.name)}${contactInfo}${emailInfo}`;
             document.getElementById("modal-pitch-content").innerText = lead.pitch_draft || lead.whatsapp_text || "No pitch generated.";
             
             const waBtn = document.getElementById("modal-wa-btn");
