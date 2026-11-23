@@ -5,4 +5,7 @@ __pycache__/
 *.log
 .DS_Store
 data/leads.db
+data/titan_creds.json
+.env
+*.env
 output/*.csv

@@ -30,6 +30,7 @@ from indiamart_lead_puller import IndiaMartLeadPuller
 from recent_web_leads import RecentWebLeadHarvester
 from tradeindia_scraper import TradeIndiaScraper
 from project_and_contractor_harvester import ProjectAndContractorHarvester
+from titan_mailer import TitanMailer
 
 mcp = FastMCP("Chemkonnect Sales Engine")
 lm = LeadManager()
@@ -39,6 +40,7 @@ indiamart = IndiaMartLeadPuller()
 harvester = RecentWebLeadHarvester(lead_manager=lm)
 tradeindia = TradeIndiaScraper(lead_manager=lm)
 project_harvester = ProjectAndContractorHarvester(lead_manager=lm)
+mailer = TitanMailer()
 
 @mcp.tool()
 def get_product_catalog(category: Optional[str] = None) -> Dict[str, Any]:
@@ -255,6 +257,180 @@ def enrich_lead_contact_details(lead_id: int) -> Dict[str, Any]:
         "contact_person": enriched.get("contact_person") or target.get("contact_person", ""),
         "email": enriched.get("email") or target.get("email", ""),
         "phone": enriched.get("phone") or target.get("phone", "")
+    }
+
+@mcp.tool()
+def configure_titan_mail(email_user: str, email_password: str, host: str = "smtp.titan.email", 
+                        port: int = 465, sender_name: str = "Chemkonnect Global Sales Desk") -> Dict[str, Any]:
+    """
+    Saves and verifies Titan Mail (GoDaddy) credentials for automated direct B2B quote dispatching.
+    """
+    test_res = mailer.test_connection(user=email_user, password=email_password, host=host, port=port)
+    if not test_res.get("success"):
+        return {
+            "status": "error",
+            "message": f"Connection test failed: {test_res.get('error')}",
+            "details": test_res
+        }
+    
+    mailer.save_credentials(user=email_user, password=email_password, host=host, port=port, sender_name=sender_name)
+    return {
+        "status": "success",
+        "message": f"Titan Mail credentials for '{email_user}' verified and saved successfully.",
+        "sender_email": email_user
+    }
+
+@mcp.tool()
+def send_titan_pitch_email(lead_id: int, custom_subject: Optional[str] = None, 
+                           custom_body: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Sends a personalized B2B quotation and distributor pitch directly to a lead's verified corporate email
+    using the authenticated GoDaddy Titan Mail account. Automatically marks lead status as 'Pitched' and
+    records the full audit trail in the outreach_history database table.
+    """
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        return {"status": "error", "message": f"Lead #{lead_id} not found."}
+    
+    recipient_email = (target.get("email") or "").strip()
+    if not recipient_email or "@" not in recipient_email:
+        return {"status": "error", "message": f"Lead #{lead_id} ({target['name']}) has no valid email address."}
+    
+    recipient_name = target.get("contact_person") or target.get("name") or "Valued Partner"
+    
+    if custom_subject and custom_body:
+        subject = custom_subject.strip()
+        body = custom_body.strip()
+    else:
+        pitch_dict = pitcher.generate_email_pitch(target)
+        subject = pitch_dict.get("subject", "Wholesale Supply Proposal - Chemkonnect Global")
+        body = pitch_dict.get("body", "")
+    
+    dispatch_res = mailer.send_pitch_email(
+        to_email=recipient_email,
+        subject=subject,
+        body_text=body,
+        recipient_name=recipient_name,
+        lead_id=lead_id
+    )
+    sender_email = dispatch_res.get("sender_email") or mailer.get_credentials().get("user") or ""
+    
+    if dispatch_res.get("success"):
+        outreach_id = lm.record_outreach(
+            lead_id=lead_id,
+            recipient_name=recipient_name,
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            subject=subject,
+            body=body,
+            status="Sent"
+        )
+        return {
+            "status": "success",
+            "message": f"Pitch successfully delivered to {recipient_email} via Titan Mail.",
+            "outreach_id": outreach_id,
+            "lead_id": lead_id,
+            "lead_name": target["name"],
+            "lead_status": "Pitched",
+            "subject": subject
+        }
+    else:
+        err = dispatch_res.get("error", "SMTP delivery failure")
+        lm.record_outreach(
+            lead_id=lead_id,
+            recipient_name=recipient_name,
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            subject=subject,
+            body=body,
+            status="Failed",
+            error_message=err
+        )
+        return {
+            "status": "error",
+            "message": f"Failed to dispatch email: {err}",
+            "lead_id": lead_id
+        }
+
+@mcp.tool()
+def auto_pitch_all_new_leads(limit: int = 10) -> Dict[str, Any]:
+    """
+    Scans the database for un-contacted 'New' leads with verified emails, generates personalized
+    pitches, dispatches them via Titan Mail, updates lead statuses to 'Pitched', and saves audit logs.
+    """
+    leads = lm.get_leads(status="New", limit=500)
+    eligible = [l for l in leads if l.get("email") and "@" in l["email"] and not l["email"].endswith("@example.com")]
+    targets = eligible[:limit]
+    
+    if not targets:
+        return {"status": "success", "message": "No new un-contacted leads with verified emails found.", "sent_count": 0}
+        
+    sent_count = 0
+    failed_count = 0
+    results = []
+    
+    for lead in targets:
+        lead_id = lead["id"]
+        recipient_email = lead["email"].strip()
+        recipient_name = lead.get("contact_person") or lead.get("name") or "Valued Partner"
+        pitch_dict = pitcher.generate_email_pitch(lead)
+        subject = pitch_dict.get("subject", "Wholesale Supply Proposal - Chemkonnect Global")
+        body = pitch_dict.get("body", "")
+        
+        dispatch_res = mailer.send_pitch_email(
+            to_email=recipient_email,
+            subject=subject,
+            body_text=body,
+            recipient_name=recipient_name,
+            lead_id=lead_id
+        )
+        sender_email = dispatch_res.get("sender_email") or mailer.get_credentials().get("user") or ""
+        
+        if dispatch_res.get("success"):
+            lm.record_outreach(
+                lead_id=lead_id,
+                recipient_name=recipient_name,
+                recipient_email=recipient_email,
+                sender_email=sender_email,
+                subject=subject,
+                body=body,
+                status="Sent"
+            )
+            sent_count += 1
+            results.append({"lead_id": lead_id, "name": lead["name"], "email": recipient_email, "status": "Sent"})
+        else:
+            lm.record_outreach(
+                lead_id=lead_id,
+                recipient_name=recipient_name,
+                recipient_email=recipient_email,
+                sender_email=sender_email,
+                subject=subject,
+                body=body,
+                status="Failed",
+                error_message=dispatch_res.get("error", "")
+            )
+            failed_count += 1
+            results.append({"lead_id": lead_id, "name": lead["name"], "email": recipient_email, "status": "Failed"})
+            
+    return {
+        "status": "success",
+        "total_targeted": len(targets),
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "results": results
+    }
+
+@mcp.tool()
+def get_lead_outreach_history(lead_id: Optional[int] = None, limit: int = 50) -> Dict[str, Any]:
+    """
+    Retrieves the persistent outreach audit history of sent pitches, delivery statuses, and timestamps.
+    """
+    history = lm.get_outreach_history(lead_id=lead_id, limit=limit)
+    return {
+        "status": "success",
+        "total_records": len(history),
+        "history": history
     }
 
 if __name__ == "__main__":

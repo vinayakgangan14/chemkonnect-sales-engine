@@ -74,6 +74,22 @@ def init_db(db_path: str = DB_PATH):
                 cursor.execute("ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_person TEXT DEFAULT '';")
             except Exception:
                 pass
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS outreach_history (
+                    id SERIAL PRIMARY KEY,
+                    lead_id INTEGER,
+                    recipient_name TEXT DEFAULT '',
+                    recipient_email TEXT NOT NULL,
+                    sender_email TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    status TEXT DEFAULT 'Sent',
+                    error_message TEXT DEFAULT '',
+                    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_outreach_lead_id ON outreach_history(lead_id);
+                CREATE INDEX IF NOT EXISTS idx_outreach_sent_at ON outreach_history(sent_at DESC);
+            """)
         else:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS leads (
@@ -105,10 +121,26 @@ def init_db(db_path: str = DB_PATH):
                 cursor.execute("ALTER TABLE leads ADD COLUMN deal_tier TEXT DEFAULT 'Tier C - Recurring'")
             if "estimated_deal_value" not in columns:
                 cursor.execute("ALTER TABLE leads ADD COLUMN estimated_deal_value INTEGER DEFAULT 50000")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS outreach_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    lead_id INTEGER,
+                    recipient_name TEXT DEFAULT '',
+                    recipient_email TEXT NOT NULL,
+                    sender_email TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    status TEXT DEFAULT 'Sent',
+                    error_message TEXT DEFAULT '',
+                    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_outreach_lead_id ON outreach_history(lead_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_outreach_sent_at ON outreach_history(sent_at DESC)")
         
-        # Reset any previously pitched or unassigned leads to 'New' as requested
+        # Ensure unassigned leads have status 'New'
         try:
-            cursor.execute("UPDATE leads SET status = 'New' WHERE status = 'Pitched' OR status IS NULL OR status = ''")
+            cursor.execute("UPDATE leads SET status = 'New' WHERE status IS NULL OR status = ''")
             # Purge fake generic generated emails
             cursor.execute("""
                 UPDATE leads 
@@ -553,6 +585,73 @@ class LeadManager:
                 "by_tier": by_tier,
                 "by_status": by_status
             }
+
+    def record_outreach(self, lead_id: Optional[int], recipient_name: str, 
+                        recipient_email: str, sender_email: str, subject: str, 
+                        body: str, status: str = "Sent", error_message: str = "") -> int:
+        """
+        Records an outreach event into outreach_history.
+        If status is 'Sent' and lead_id is provided, automatically updates lead status to 'Pitched'.
+        """
+        p = q_ph()
+        with get_connection(self.db_path) as conn:
+            cursor = get_cursor(conn)
+            if IS_POSTGRES:
+                cursor.execute(f"""
+                    INSERT INTO outreach_history (lead_id, recipient_name, recipient_email, sender_email, subject, body, status, error_message)
+                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                    RETURNING id
+                """, (lead_id, (recipient_name or "").strip(), recipient_email.strip(), sender_email.strip(), subject.strip(), body.strip(), status, error_message))
+                row = cursor.fetchone()
+                outreach_id = row["id"] if row else 0
+            else:
+                cursor.execute(f"""
+                    INSERT INTO outreach_history (lead_id, recipient_name, recipient_email, sender_email, subject, body, status, error_message)
+                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                """, (lead_id, (recipient_name or "").strip(), recipient_email.strip(), sender_email.strip(), subject.strip(), body.strip(), status, error_message))
+                outreach_id = cursor.lastrowid
+            
+            # If successfully sent, update lead status to 'Pitched'
+            if status == "Sent" and lead_id:
+                cursor.execute(f"UPDATE leads SET status = 'Pitched', updated_at = {p} WHERE id = {p}", (datetime.now().isoformat(), lead_id))
+            
+            conn.commit()
+            return outreach_id
+
+    def get_outreach_history(self, lead_id: Optional[int] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieves sent outreach logs, joined with lead names and categories.
+        """
+        p = q_ph()
+        with get_connection(self.db_path) as conn:
+            cursor = get_cursor(conn)
+            if lead_id:
+                query = f"""
+                    SELECT o.*, l.name as lead_name, l.category as lead_category 
+                    FROM outreach_history o
+                    LEFT JOIN leads l ON o.lead_id = l.id
+                    WHERE o.lead_id = {p}
+                    ORDER BY o.id DESC, o.sent_at DESC
+                    LIMIT {p}
+                """
+                cursor.execute(query, (lead_id, limit))
+            else:
+                query = f"""
+                    SELECT o.*, l.name as lead_name, l.category as lead_category 
+                    FROM outreach_history o
+                    LEFT JOIN leads l ON o.lead_id = l.id
+                    ORDER BY o.id DESC, o.sent_at DESC
+                    LIMIT {p}
+                """
+                cursor.execute(query, (limit,))
+            rows = cursor.fetchall()
+            results = []
+            for r in rows:
+                d = dict(r)
+                if d.get("sent_at") is not None:
+                    d["sent_at"] = str(d["sent_at"])
+                results.append(d)
+            return results
 
 if __name__ == "__main__":
     lm = LeadManager()

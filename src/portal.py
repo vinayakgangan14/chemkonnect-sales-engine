@@ -32,6 +32,7 @@ from indiamart_lead_puller import IndiaMartLeadPuller
 from tradeindia_scraper import TradeIndiaScraper
 from project_and_contractor_harvester import ProjectAndContractorHarvester
 from chemkonnect_mcp import mcp
+from titan_mailer import TitanMailer
 
 app = FastAPI(title="Chemkonnect Global ₹100 Crore Sales Portal & Cloud MCP")
 lm = LeadManager()
@@ -40,6 +41,7 @@ harvester = RecentWebLeadHarvester(lead_manager=lm)
 indiamart = IndiaMartLeadPuller()
 tradeindia = TradeIndiaScraper(lead_manager=lm)
 project_harvester = ProjectAndContractorHarvester(lead_manager=lm)
+mailer = TitanMailer()
 
 # Mount Remote Cloud MCP (SSE Transport) at /mcp
 try:
@@ -56,6 +58,21 @@ class HarvestRequest(BaseModel):
 
 class StatusUpdateRequest(BaseModel):
     status: str
+
+class TitanCredsRequest(BaseModel):
+    user: str
+    password: str
+    host: str = "smtp.titan.email"
+    port: int = 465
+    sender_name: str = "Chemkonnect Global Sales Desk"
+    test_now: bool = True
+
+class SendPitchRequest(BaseModel):
+    subject: Optional[str] = None
+    body: Optional[str] = None
+
+class AutoPitchRequest(BaseModel):
+    limit: int = 10
 
 @app.get("/api/debug")
 def debug_status():
@@ -298,6 +315,190 @@ def update_status(lead_id: int, req: StatusUpdateRequest):
     if not success:
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"status": "success", "lead_id": lead_id, "new_status": req.status}
+
+@app.get("/api/admin/titan-creds")
+def get_titan_creds():
+    status = mailer.get_status()
+    return {"status": "success", "creds": status}
+
+@app.post("/api/admin/titan-creds")
+def save_titan_creds(req: TitanCredsRequest):
+    if req.test_now:
+        test_res = mailer.test_connection(user=req.user, password=req.password, host=req.host, port=req.port)
+        if not test_res.get("success"):
+            return {
+                "status": "error",
+                "message": test_res.get("error", "SMTP Authentication failed"),
+                "details": test_res
+            }
+    mailer.save_credentials(
+        user=req.user,
+        password=req.password,
+        host=req.host,
+        port=req.port,
+        sender_name=req.sender_name
+    )
+    return {
+        "status": "success",
+        "message": "Titan Mail credentials verified and saved successfully!",
+        "sender_email": req.user
+    }
+
+@app.post("/api/leads/{lead_id}/send-pitch-email")
+def send_lead_pitch_email(lead_id: int, req: Optional[SendPitchRequest] = None):
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    recipient_email = (target.get("email") or "").strip()
+    if not recipient_email or "@" not in recipient_email:
+        raise HTTPException(status_code=400, detail="Lead does not have a verified email address.")
+    
+    # Generate tailored pitch if not custom supplied
+    if req and req.subject and req.body:
+        subject = req.subject.strip()
+        body = req.body.strip()
+    else:
+        pitch_dict = pitcher.generate_email_pitch(target)
+        subject = pitch_dict.get("subject", f"Wholesale Quote - Chemkonnect Global")
+        body = pitch_dict.get("body", "")
+    
+    recipient_name = target.get("contact_person") or target.get("name") or "Valued Partner"
+    
+    # Dispatch email
+    dispatch_res = mailer.send_pitch_email(
+        to_email=recipient_email,
+        subject=subject,
+        body_text=body,
+        recipient_name=recipient_name,
+        lead_id=lead_id
+    )
+    
+    sender_email = dispatch_res.get("sender_email") or mailer.get_credentials().get("user") or "unknown"
+    
+    if dispatch_res.get("success"):
+        # Record outreach and automatically update status to 'Pitched'
+        outreach_id = lm.record_outreach(
+            lead_id=lead_id,
+            recipient_name=recipient_name,
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            subject=subject,
+            body=body,
+            status="Sent",
+            error_message=""
+        )
+        return {
+            "status": "success",
+            "message": f"Personalized B2B pitch successfully delivered to {recipient_email} via Titan Mail.",
+            "outreach_id": outreach_id,
+            "lead_id": lead_id,
+            "new_status": "Pitched",
+            "subject": subject
+        }
+    else:
+        err = dispatch_res.get("error", "Unknown SMTP error")
+        lm.record_outreach(
+            lead_id=lead_id,
+            recipient_name=recipient_name,
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            subject=subject,
+            body=body,
+            status="Failed",
+            error_message=err
+        )
+        return {
+            "status": "error",
+            "message": f"Failed to deliver email: {err}",
+            "lead_id": lead_id,
+            "error_details": err
+        }
+
+@app.post("/api/outreach/auto-pitch-new")
+async def auto_pitch_new_leads(req: AutoPitchRequest = AutoPitchRequest()):
+    # Get all 'New' leads that have an authentic email
+    leads = lm.get_leads(status="New", limit=500)
+    eligible = [
+        l for l in leads 
+        if l.get("email") and "@" in l["email"] and not l["email"].endswith("@example.com")
+    ]
+    
+    if not eligible:
+        return {
+            "status": "success",
+            "total_targeted": 0,
+            "sent_count": 0,
+            "message": "No new un-contacted leads with verified emails found."
+        }
+        
+    targets = eligible[:req.limit]
+    sent_count = 0
+    failed_count = 0
+    results = []
+    
+    for lead in targets:
+        lead_id = lead["id"]
+        recipient_email = lead["email"].strip()
+        recipient_name = lead.get("contact_person") or lead.get("name") or "Valued Partner"
+        pitch_dict = pitcher.generate_email_pitch(lead)
+        subject = pitch_dict.get("subject", "Wholesale Supply Proposal - Chemkonnect Global")
+        body = pitch_dict.get("body", "")
+        
+        dispatch_res = mailer.send_pitch_email(
+            to_email=recipient_email,
+            subject=subject,
+            body_text=body,
+            recipient_name=recipient_name,
+            lead_id=lead_id
+        )
+        sender_email = dispatch_res.get("sender_email") or mailer.get_credentials().get("user") or ""
+        
+        if dispatch_res.get("success"):
+            lm.record_outreach(
+                lead_id=lead_id,
+                recipient_name=recipient_name,
+                recipient_email=recipient_email,
+                sender_email=sender_email,
+                subject=subject,
+                body=body,
+                status="Sent"
+            )
+            sent_count += 1
+            results.append({"lead_id": lead_id, "name": lead["name"], "email": recipient_email, "status": "Sent"})
+        else:
+            lm.record_outreach(
+                lead_id=lead_id,
+                recipient_name=recipient_name,
+                recipient_email=recipient_email,
+                sender_email=sender_email,
+                subject=subject,
+                body=body,
+                status="Failed",
+                error_message=dispatch_res.get("error", "")
+            )
+            failed_count += 1
+            results.append({"lead_id": lead_id, "name": lead["name"], "email": recipient_email, "status": "Failed", "error": dispatch_res.get("error")})
+            
+        await asyncio.sleep(1.5)
+        
+    return {
+        "status": "success",
+        "total_targeted": len(targets),
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "results": results
+    }
+
+@app.get("/api/outreach/history")
+def get_outreach_history(lead_id: Optional[int] = None, limit: int = 100):
+    history = lm.get_outreach_history(lead_id=lead_id, limit=limit)
+    return {
+        "status": "success",
+        "count": len(history),
+        "history": history
+    }
 
 @app.get("/api/export")
 def export_csv():
