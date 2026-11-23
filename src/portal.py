@@ -523,7 +523,7 @@ def system_status():
         "lead_sorting": "DESCENDING (latest first)",
         "total_leads": stats.get("total_leads"),
         "pipeline_crores": stats.get("pipeline_value_crores"),
-        "build_version": "v2.0-pan-india-descending"
+        "build_version": "v2.1-titan-pan-india"
     }
 
 @app.post("/api/admin/clean-pipeline")
