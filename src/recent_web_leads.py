@@ -191,163 +191,97 @@ class RecentWebLeadHarvester:
                           timelimit: str = "w", 
                           max_results_per_pattern: int = 5) -> List[Dict[str, Any]]:
         """
-        Guaranteed Hybrid Harvester:
-        1. Queries open web for 7-day market mentions and enriches authentic contact persons and emails
-        2. Taps verified Pan-India commercial accounts with verified decision makers
-        Guarantees high-yield, actionable leads with status 'New' every time.
+        Scrapes ONLY fresh leads, procurement requirements, and RFQs posted on the internet 
+        and market places strictly within the latest 7-DAY rolling window (timelimit='w').
+        Never falls back to un-timed search or older 30-day listings.
         """
-        print(f"\n[*] Harvesting market requirements for '{product_keyword}' in '{location}' (7-day window)...")
+        print(f"\n[*] Harvesting market requirements for '{product_keyword}' in '{location}' (strictly latest 7 days on internet)...")
         discovered_leads = []
-        cat_key = self.match_sub_catalog(product_keyword)
         
-        # 1. Attempt live web search with strict quality and contact person extraction
+        search_queries = [
+            f'"{product_keyword}" (requirement OR RFQ OR tender OR "looking to buy" OR "purchase inquiry") {location}',
+            f'site:indiamart.com OR site:tradeindia.com "{product_keyword}" (requirement OR inquiry) {location}',
+        ]
+        
         try:
             from ddgs import DDGS
             with DDGS() as ddgs:
-                query = f"{product_keyword} wholesale dealers contractors {location}"
-                try:
-                    res = list(ddgs.text(query, timelimit=timelimit, max_results=5))
-                except Exception:
-                    res = list(ddgs.text(query, max_results=5))
-                for item in res:
-                    title = item.get("title", "").split("-")[0].split("|")[0].strip()
-                    body = item.get("body", "")
-                    href = item.get("href", "")
-                    
-                    # Reject non-business / junk domains and consumer articles
-                    href_l = href.lower()
-                    title_l = title.lower()
-                    if any(bad in href_l or bad in title_l for bad in [
-                        'wikipedia', 'dictionary', 'merriam', 'britannica', 'definition', 'meaning',
-                        'microsoft', 'apple', 'google', 'facebook', 'instagram', 'youtube', 'reddit',
-                        'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary',
-                        'toyota', 'corolla', 'honda', 'car', 'vehicle', 'tira', 'nykaa', 'myntra', 'flipkart', 'amazon',
-                        'olx', 'quikr', 'nairaland', 'ndtv', 'moneycontrol', 'livemint', 'economictimes', 'timesofindia',
-                        'hindustantimes', 'business-standard'
-                    ]):
+                for q in search_queries:
+                    try:
+                        # Strictly enforce timelimit='w' (past 7 days only)
+                        results = list(ddgs.text(q, timelimit="w", max_results=max_results_per_pattern))
+                    except Exception as e:
+                        print(f"  [!] 7-day search notice for '{q}': {e}")
                         continue
-
-                    # Extract contacts using ContactEnricher
-                    contacts = enricher.extract_from_text(f"{title} {body}")
-                    phone = contacts.get("phone") or ""
-                    email = contacts.get("email") or ""
-                    contact_person = contacts.get("contact_person") or ""
-
-                    # If phone missing from regex, attempt fallback
-                    if not phone:
-                        raw_phones = PHONE_REGEX.findall(f"{title} {body}")
-                        phone = self.clean_phone(raw_phones[0]) if raw_phones else ""
-
-                    # If website available and no email, attempt direct site fetch
-                    if not email and href.startswith("http"):
-                        site_c = enricher.fetch_website_contacts(href)
-                        email = site_c.get("email") or ""
-                        if not contact_person:
-                            contact_person = site_c.get("contact_person") or ""
-
-                    # Require valid phone or real corporate email
-                    if not phone and not email:
-                        continue
-
-                    if len(title) > 3:
-                        lead_id = self.lm.add_lead(
-                            name=title,
-                            contact_person=contact_person,
-                            category=product_keyword,
-                            city=location,
-                            area=location,
-                            phone=phone,
-                            email=email,
-                            address=f"Web Discovery (7-Day Rolling): {body[:180]}...",
-                            source=href
-                        )
-                        if lead_id:
-                            pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
-                            discovered_leads.append({
-                                "lead_id": lead_id,
-                                "name": title,
-                                "contact_person": contact_person,
-                                "phone": phone,
-                                "email": email,
-                                "city": location,
-                                "priority_zone": self.pitcher.classify_region_priority(location),
-                                "source_url": href,
-                                "whatsapp_pitch": pitch_res.get("whatsapp_message", "")
-                            })
+                        
+                    for item in results:
+                        title = item.get("title", "").split("-")[0].split("|")[0].strip()
+                        body = item.get("body", "")
+                        href = item.get("href", "")
+                        
+                        # Filter out non-business and irrelevant articles
+                        href_l = href.lower()
+                        title_l = title.lower()
+                        if any(bad in href_l or bad in title_l for bad in [
+                            'wikipedia', 'dictionary', 'merriam', 'britannica', 'definition', 'meaning',
+                            'microsoft', 'apple', 'google', 'facebook', 'instagram', 'youtube', 'reddit',
+                            'quora', 'pinterest', 'elespanol', 'twitter', 'x.com', 'support.', 'help.', 'news', 'wiktionary',
+                            'toyota', 'corolla', 'honda', 'car', 'vehicle', 'tira', 'nykaa', 'myntra', 'flipkart', 'amazon',
+                            'olx', 'quikr', 'nairaland', 'ndtv', 'moneycontrol', 'livemint', 'economictimes', 'timesofindia',
+                            'hindustantimes', 'business-standard'
+                        ]):
+                            continue
+                            
+                        # Extract verified contacts using ContactEnricher
+                        contacts = enricher.extract_from_text(f"{title} {body}")
+                        phone = contacts.get("phone") or ""
+                        email = contacts.get("email") or ""
+                        contact_person = contacts.get("contact_person") or ""
+                        
+                        if not phone:
+                            raw_phones = PHONE_REGEX.findall(f"{title} {body}")
+                            phone = self.clean_phone(raw_phones[0]) if raw_phones else ""
+                            
+                        if not email and href.startswith("http"):
+                            site_c = enricher.fetch_website_contacts(href)
+                            email = site_c.get("email") or ""
+                            if not contact_person:
+                                contact_person = site_c.get("contact_person") or ""
+                                
+                        # Require at least one valid contact channel
+                        if not phone and not email:
+                            continue
+                            
+                        if len(title) > 3:
+                            lead_id = self.lm.add_lead(
+                                name=title,
+                                contact_person=contact_person,
+                                category=product_keyword,
+                                city=location,
+                                area=location,
+                                phone=phone,
+                                email=email,
+                                address=f"Internet 7-Day Live Post: {body[:180]}...",
+                                source=href
+                            )
+                            if lead_id:
+                                pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
+                                discovered_leads.append({
+                                    "lead_id": lead_id,
+                                    "name": title,
+                                    "contact_person": contact_person,
+                                    "phone": phone,
+                                    "email": email,
+                                    "city": location,
+                                    "priority_zone": self.pitcher.classify_region_priority(location),
+                                    "source_url": href,
+                                    "whatsapp_pitch": pitch_res.get("whatsapp_message", "")
+                                })
+                                print(f"  [+] Discovered 7-Day Web Lead #{lead_id}: {title} ({location})")
         except Exception as e:
-            print(f"  [!] Web query notice: {e}")
-
-        # 2. Supplement with verified Pan-India commercial accounts for this product & city
-        cat_data = PAN_INDIA_DIRECTORY.get(cat_key, PAN_INDIA_DIRECTORY["gypsum"])
-        matched_accounts = []
-        for k in cat_data:
-            if k.lower() in location.lower() or location.lower() in k.lower():
-                matched_accounts.extend(cat_data[k])
-                break
-        if not matched_accounts:
-            matched_accounts = cat_data.get("Mumbai") or list(cat_data.values())[0]
-
-        timestamp = datetime.now().strftime("%d%m")
-        for acc in matched_accounts:
-            raw_name = acc["name"]
-            phone = acc["phone"]
-            area = acc.get("area", location)
-            tier = acc.get("tier", "Tier B - Commercial Project")
-            val = acc.get("value", 850000)
-            contact_person = acc.get("contact_person", "")
-            official_email = acc.get("email", "")
-
-            # Try to add primary lead
-            lead_id = self.lm.add_lead(
-                name=raw_name,
-                contact_person=contact_person,
-                category=f"{product_keyword} Commercial Supply",
-                city=location,
-                area=area,
-                phone=phone,
-                email=official_email,
-                address=f"Pan-India Verified Procurement Desk: {area}, {location}",
-                source="Pan-India Commercial Directory",
-                deal_tier=tier,
-                estimated_value=val
-            )
-
-            # If already exists, create fresh unique inquiry entry
-            if not lead_id:
-                unique_name = f"{raw_name} (Inquiry #{timestamp}_{random.randint(10, 99)})"
-                unique_phone = f"+9198{random.randint(10000000, 99999999)}"
-                lead_id = self.lm.add_lead(
-                    name=unique_name,
-                    contact_person=contact_person,
-                    category=f"{product_keyword} Fresh RFQ",
-                    city=location,
-                    area=area,
-                    phone=unique_phone,
-                    email=official_email,
-                    address=f"Fresh 7-Day Ingestion ({datetime.now().strftime('%d %b %Y')}): {area}, {location}",
-                    source="Pan-India Live RFQ Stream",
-                    deal_tier=tier,
-                    estimated_value=val
-                )
-
-            if lead_id:
-                # Ensure status is 'New'
-                self.lm.update_lead(lead_id, status="New")
-                pitch_res = self.pitcher.generate_pitch_for_lead(lead_id)
-                discovered_leads.append({
-                    "lead_id": lead_id,
-                    "name": raw_name,
-                    "contact_person": contact_person,
-                    "phone": phone,
-                    "email": official_email,
-                    "city": location,
-                    "priority_zone": self.pitcher.classify_region_priority(location),
-                    "source_url": "https://chemkonnect.com",
-                    "whatsapp_pitch": pitch_res.get("whatsapp_message", "")
-                })
-                print(f"  [✔] Saved Lead #{lead_id} [New]: {raw_name} ({location}) - Contact: {contact_person} | {official_email}")
-
-        print(f"[✔] Total fresh leads returned: {len(discovered_leads)}")
+            print(f"  [!] Web harvester exception: {e}")
+            
+        print(f"[✔] Total 7-day live web leads discovered: {len(discovered_leads)}")
         return discovered_leads
 
 if __name__ == "__main__":

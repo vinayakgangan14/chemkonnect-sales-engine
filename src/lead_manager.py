@@ -139,12 +139,27 @@ def init_db(db_path: str = DB_PATH):
                    OR LOWER(name) LIKE '%what is plywood%'
             """)
             # Enforce 7-Day Rolling Window: delete records older than 7 days
+            # And purge all synthetic/duplicate inquiry records
             if IS_POSTGRES:
-                cursor.execute("DELETE FROM leads WHERE created_at < NOW() - INTERVAL '7 days'")
-                cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+                cursor.execute("""
+                    DELETE FROM leads 
+                    WHERE created_at < NOW() - INTERVAL '7 days'
+                       OR email LIKE 'rfq.%@gmail.com' 
+                       OR email LIKE 'procurement.%@gmail.com' 
+                       OR name LIKE '%Inquiry #%'
+                       OR name LIKE '%(Inquiry%'
+                       OR source LIKE '%Pan-India Live RFQ Stream%'
+                """)
             else:
-                cursor.execute("DELETE FROM leads WHERE created_at < datetime('now', '-7 days')")
-                cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+                cursor.execute("""
+                    DELETE FROM leads 
+                    WHERE created_at < datetime('now', '-7 days')
+                       OR email LIKE 'rfq.%@gmail.com' 
+                       OR email LIKE 'procurement.%@gmail.com' 
+                       OR name LIKE '%Inquiry #%'
+                       OR name LIKE '%(Inquiry%'
+                       OR source LIKE '%Pan-India Live RFQ Stream%'
+                """)
         except Exception:
             pass
         conn.commit()
@@ -352,14 +367,31 @@ class LeadManager:
 
     def purge_leads_older_than(self, days: int = 7) -> int:
         """
-        Enforces strict rolling window: deletes any leads older than `days` days.
+        Enforces strict rolling window: deletes any leads older than `days` days,
+        and purges synthetic/duplicate inquiry entries.
         """
         with get_connection(self.db_path) as conn:
             cursor = get_cursor(conn)
             if self.is_postgres:
-                cursor.execute(f"DELETE FROM leads WHERE created_at < NOW() - INTERVAL '{days} days'")
+                cursor.execute(f"""
+                    DELETE FROM leads 
+                    WHERE created_at < NOW() - INTERVAL '{days} days'
+                       OR email LIKE 'rfq.%@gmail.com' 
+                       OR email LIKE 'procurement.%@gmail.com' 
+                       OR name LIKE '%Inquiry #%'
+                       OR name LIKE '%(Inquiry%'
+                       OR source LIKE '%Pan-India Live RFQ Stream%'
+                """)
             else:
-                cursor.execute(f"DELETE FROM leads WHERE created_at < datetime('now', '-{days} days')")
+                cursor.execute(f"""
+                    DELETE FROM leads 
+                    WHERE created_at < datetime('now', '-{days} days')
+                       OR email LIKE 'rfq.%@gmail.com' 
+                       OR email LIKE 'procurement.%@gmail.com' 
+                       OR name LIKE '%Inquiry #%'
+                       OR name LIKE '%(Inquiry%'
+                       OR source LIKE '%Pan-India Live RFQ Stream%'
+                """)
             count = cursor.rowcount if hasattr(cursor, 'rowcount') else 0
             conn.commit()
             return count

@@ -220,19 +220,19 @@ async def autonomous_pan_india_hourly_harvester():
     """
     await asyncio.sleep(45)
     pan_india_keywords = [
-        ("Dyson Airblade commercial hand dryer", "Mumbai"),
-        ("Dyson commercial air purifier corporate fitout", "Bangalore"),
-        ("Dyson Airblade 9kJ restrooms", "Delhi NCR"),
-        ("Pidilite Fevicol wholesale distributor", "Gujarat"),
-        ("Dr Fixit Fastflex commercial waterproofing", "Delhi NCR"),
-        ("Fevicol ProBond marine adhesive", "Mumbai"),
-        ("Gypsum plasterboard false ceiling", "India"),
-        ("BWP 710 Marine plywood", "Maharashtra"),
-        ("Commercial interior fitout contractor", "Bangalore"),
-        ("Drywall false ceiling contractor", "Hyderabad"),
-        ("JSW expansion joint material", "Mumbai"),
-        ("Plywood wholesale dealers", "Chennai"),
-        ("Industrial solvent chemical tanker", "Vapi")
+        ("Dyson Airblade hand dryer requirement", "Mumbai"),
+        ("Dyson commercial air purifier fitout inquiry", "Bangalore"),
+        ("Dyson Airblade 9kJ commercial restroom RFQ", "Delhi NCR"),
+        ("Pidilite Fevicol adhesive bulk requirement", "Gujarat"),
+        ("Dr Fixit Fastflex commercial waterproofing tender", "Delhi NCR"),
+        ("Fevicol ProBond marine adhesive requirement", "Mumbai"),
+        ("Gypsum plasterboard false ceiling contractor RFQ", "Maharashtra"),
+        ("BWP 710 Marine plywood bulk purchase", "Surat"),
+        ("Commercial interior turnkey fitout RFQ", "Bangalore"),
+        ("Drywall false ceiling contractor inquiry", "Hyderabad"),
+        ("JSW architectural expansion joint requirement", "Mumbai"),
+        ("Commercial plywood wholesale requirement", "Chennai"),
+        ("Industrial chemical solvent tanker requirement", "Vapi")
     ]
     
     while True:
@@ -334,12 +334,27 @@ def clean_pipeline():
     with get_connection(lm.db_path) as conn:
         cursor = conn.cursor()
         # 0. Strict 7-Day Rolling Enforcement: Purge leads older than 7 days
+        # And purge all synthetic/duplicate inquiry records
         if IS_POSTGRES:
-            cursor.execute("DELETE FROM leads WHERE created_at < NOW() - INTERVAL '7 days'")
-            cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+            cursor.execute("""
+                DELETE FROM leads 
+                WHERE created_at < NOW() - INTERVAL '7 days'
+                   OR email LIKE 'rfq.%@gmail.com' 
+                   OR email LIKE 'procurement.%@gmail.com' 
+                   OR name LIKE '%Inquiry #%'
+                   OR name LIKE '%(Inquiry%'
+                   OR source LIKE '%Pan-India Live RFQ Stream%'
+            """)
         else:
-            cursor.execute("DELETE FROM leads WHERE created_at < datetime('now', '-7 days')")
-            cursor.execute("DELETE FROM leads WHERE email LIKE 'rfq.%@gmail.com' OR email LIKE 'procurement.%@gmail.com' OR name LIKE '%Inquiry #2311_%'")
+            cursor.execute("""
+                DELETE FROM leads 
+                WHERE created_at < datetime('now', '-7 days')
+                   OR email LIKE 'rfq.%@gmail.com' 
+                   OR email LIKE 'procurement.%@gmail.com' 
+                   OR name LIKE '%Inquiry #%'
+                   OR name LIKE '%(Inquiry%'
+                   OR source LIKE '%Pan-India Live RFQ Stream%'
+            """)
 
         # 1. Purge non-business scrapings without contact
         cursor.execute("""
