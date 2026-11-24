@@ -342,17 +342,22 @@
             </div>
 
             <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                <span>Dispatches via official Titan Mail SMTP (GoDaddy). Automatically updates lead to <b class="text-emerald-400">Pitched</b> and saves audit record.</span>
+                <i class="fa-solid fa-envelope-open-text text-cyan-400"></i>
+                <span>Injects pre-filled draft directly into your <b>Titan Mail "Drafts"</b> folder and opens Titan Webmail. Updates lead to <b class="text-amber-300">Pitched (Follow-up after 48 hrs)</b>.</span>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
-                <button onclick="closeTitanPitchModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium border border-slate-700 transition">
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <button onclick="closeTitanPitchModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium border border-slate-700 transition">
                     Cancel
                 </button>
-                <button id="btn-dispatch-titan" onclick="dispatchTitanPitch()" class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
-                    <i class="fa-solid fa-paper-plane"></i> Send Pitch via Titan Mail
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openInDefaultMailApp()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-xl text-xs font-semibold border border-blue-500/30 transition flex items-center gap-1.5" title="Open compose window in your computer's default email app">
+                        <i class="fa-regular fa-envelope"></i> Default Mail App
+                    </button>
+                    <button id="btn-create-draft-titan" onclick="openInTitanDraft(true)" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-paper-plane"></i> 🚀 Open in Titan Mail (Pre-filled Draft)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1089,6 +1094,81 @@ Dombivli / Thane, Maharashtra`;
 
         function closeTitanPitchModal() {
             document.getElementById("titan-pitch-modal").classList.add("hidden");
+        }
+
+        async function openInTitanDraft(openWebmail = true) {
+            const leadId = parseInt(document.getElementById("titan-lead-id").value);
+            const recipientInput = document.getElementById("titan-pitch-recipient-input");
+            const recipientEmail = recipientInput ? recipientInput.value.trim() : "";
+            const subject = document.getElementById("titan-pitch-subject").value.trim();
+            const body = document.getElementById("titan-pitch-body").value.trim();
+            const btn = document.getElementById("btn-create-draft-titan");
+
+            if (!recipientEmail || !recipientEmail.includes("@")) {
+                alert("Please enter a valid recipient email address to prepare the pitch.");
+                if (recipientInput) recipientInput.focus();
+                return;
+            }
+
+            if (!subject || !body) {
+                alert("Please ensure both subject and proposal body are provided.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Preparing Draft in Titan Mail...`;
+
+            try {
+                // Copy pitch content to clipboard as a seamless fallback
+                try {
+                    await navigator.clipboard.writeText(`To: ${recipientEmail}\nSubject: ${subject}\n\n${body}`);
+                } catch(e) {}
+
+                const res = await fetch(`/api/leads/${leadId}/create-titan-draft`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body, recipient_email: recipientEmail })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    // Instantly update lead in memory
+                    const targetLead = allLeads.find(l => l.id === leadId);
+                    if (targetLead) {
+                        targetLead.status = "Pitched";
+                        targetLead.email = recipientEmail;
+                        targetLead.last_pitched_at = new Date().toISOString();
+                    }
+                    renderLeads();
+                    closeTitanPitchModal();
+
+                    if (openWebmail) {
+                        window.open("https://app.titan.email/", "_blank");
+                    }
+
+                    alert(`✔ Pre-filled draft created in your Titan Mail "Drafts" folder for:\n${recipientEmail}\n\nTitan Webmail has opened in a new tab — simply open the draft and click Send!\n(Proposal text is also copied to your clipboard).`);
+                    await fetchLeads();
+                } else {
+                    alert(`⚠ Failed to prepare draft:\n\n${data.message || data.error_details}`);
+                }
+            } catch (err) {
+                alert("Draft error: " + err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 🚀 Open in Titan Mail (Pre-filled Draft)`;
+            }
+        }
+
+        function openInDefaultMailApp() {
+            const recipientInput = document.getElementById("titan-pitch-recipient-input");
+            const recipientEmail = recipientInput ? recipientInput.value.trim() : "";
+            const subject = document.getElementById("titan-pitch-subject").value.trim();
+            const body = document.getElementById("titan-pitch-body").value.trim();
+            if (!recipientEmail) {
+                alert("Please enter a valid recipient email address.");
+                return;
+            }
+            const mailto = `mailto:${encodeURIComponent(recipientEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailto;
         }
 
         async function dispatchTitanPitch() {

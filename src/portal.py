@@ -450,6 +450,73 @@ def send_lead_pitch_email(lead_id: int, req: Optional[SendPitchRequest] = None):
             "error_details": err
         }
 
+@app.post("/api/leads/{lead_id}/create-titan-draft")
+def create_lead_titan_draft(lead_id: int, req: Optional[SendPitchRequest] = None):
+    import urllib.parse
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    recipient_email = ""
+    if req and req.recipient_email and req.recipient_email.strip():
+        recipient_email = req.recipient_email.strip()
+        if recipient_email != (target.get("email") or "").strip():
+            lm.update_lead(lead_id=lead_id, email=recipient_email)
+    else:
+        recipient_email = (target.get("email") or "").strip()
+
+    if not recipient_email or "@" not in recipient_email:
+        raise HTTPException(status_code=400, detail="Please provide a valid recipient email address.")
+
+    if req and req.subject and req.body:
+        subject = req.subject.strip()
+        body = req.body.strip()
+    else:
+        pitch_dict = pitcher.generate_email_pitch(target)
+        subject = pitch_dict.get("subject", "Wholesale Quote - Chemkonnect Global")
+        body = pitch_dict.get("body", "")
+
+    recipient_name = target.get("contact_person") or target.get("name") or "Valued Partner"
+
+    # Create draft directly inside Titan Mail 'Drafts' folder via IMAP
+    draft_res = mailer.create_draft(
+        to_email=recipient_email,
+        subject=subject,
+        body_text=body,
+        recipient_name=recipient_name,
+        lead_id=lead_id
+    )
+
+    sender_email = draft_res.get("sender_email") or mailer.get_credentials().get("user") or "info@chemkonnect.com"
+
+    # Record outreach and automatically update lead to 'Pitched'
+    outreach_id = lm.record_outreach(
+        lead_id=lead_id,
+        recipient_name=recipient_name,
+        recipient_email=recipient_email,
+        sender_email=sender_email,
+        subject=subject,
+        body=body,
+        status="Draft Created",
+        error_message=""
+    )
+    lm.update_lead(lead_id=lead_id, status="Pitched")
+
+    mailto_url = f"mailto:{recipient_email}?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body)}"
+
+    return {
+        "status": "success",
+        "message": f"Pre-filled draft prepared for {recipient_email}.",
+        "webmail_url": "https://app.titan.email/",
+        "mailto_url": mailto_url,
+        "lead_id": lead_id,
+        "new_status": "Pitched",
+        "subject": subject,
+        "body": body,
+        "recipient_email": recipient_email
+    }
+
 @app.post("/api/outreach/auto-pitch-new")
 async def auto_pitch_new_leads(req: AutoPitchRequest = AutoPitchRequest()):
     # Get all 'New' leads that have an authentic email

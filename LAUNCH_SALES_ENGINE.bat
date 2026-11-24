@@ -17,47 +17,53 @@ echo  [6] Scan Web & Tenders for Plywood & Panels (Pune / Maharashtra)
 echo  [7] Open Web Portal at http://127.0.0.1:5000
 echo  [8] View Pipeline Summary & Export Excel CSV
 echo  [9] Open Output Folder (View Excel CSVs)
+set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
+if not exist "%PYTHON_EXE%" (
+    set "PYTHON_EXE=python"
+)
+
 echo  [0] Exit
 echo.
 set /p choice="Enter choice [0-9]: "
 
 if "%choice%"=="1" (
-    uv run python run_pipeline.py --projects
+    "%PYTHON_EXE%" run_pipeline.py --projects
     pause
     goto :eof
 )
 if "%choice%"=="2" (
-    uv run python run_pipeline.py --giants
+    "%PYTHON_EXE%" run_pipeline.py --giants
     pause
     goto :eof
 )
 if "%choice%"=="3" (
-    uv run python run_pipeline.py --indiamart
+    "%PYTHON_EXE%" run_pipeline.py --indiamart
     pause
     goto :eof
 )
 if "%choice%"=="4" (
-    uv run python run_pipeline.py --tradeindia
+    "%PYTHON_EXE%" run_pipeline.py --tradeindia
     pause
     goto :eof
 )
 if "%choice%"=="5" (
-    uv run python run_pipeline.py --recent --category "Gypsum board" --location "Mumbai"
+    "%PYTHON_EXE%" run_pipeline.py --recent --category "Gypsum board" --location "Mumbai"
     pause
     goto :eof
 )
 if "%choice%"=="6" (
-    uv run python run_pipeline.py --recent --category "Plywood" --location "Pune"
+    "%PYTHON_EXE%" run_pipeline.py --recent --category "Plywood" --location "Pune"
     pause
     goto :eof
 )
 if "%choice%"=="7" (
     start http://127.0.0.1:5000
-    uv run uvicorn src.portal:app --host 127.0.0.1 --port 5000 --reload
+    "%PYTHON_EXE%" -m uvicorn src.portal:app --host 127.0.0.1 --port 5000
     goto :eof
 )
 if "%choice%"=="8" (
-    uv run python run_pipeline.py
+    "%PYTHON_EXE%" run_pipeline.py
     pause
     goto :eof
 )
