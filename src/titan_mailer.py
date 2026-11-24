@@ -229,6 +229,46 @@ class TitanMailer:
 </html>"""
         return html
 
+    def _sync_to_sent_folder(self, user: str, password: str, host: str, msg: Any) -> bool:
+        """
+        Appends sent email into Webmail 'Sent' folder via IMAP SSL (port 993)
+        so that every outgoing proposal appears in your GoDaddy / Titan webmail Sent folder.
+        """
+        import imaplib
+        import time
+
+        imap_hosts = []
+        if "secureserver" in host.lower():
+            imap_hosts = ["imap.secureserver.net", "imap.titan.email"]
+        else:
+            imap_hosts = ["imap.titan.email", "imap.secureserver.net"]
+
+        for imap_host in imap_hosts:
+            try:
+                with imaplib.IMAP4_SSL(imap_host, 993, timeout=8) as m:
+                    m.login(user, password)
+                    target_folder = "Sent"
+                    try:
+                        typ, folder_list = m.list()
+                        for f in folder_list:
+                            f_str = f.decode("utf-8", errors="ignore")
+                            if "\\Sent" in f_str:
+                                parts = f_str.split('"')
+                                if len(parts) >= 3:
+                                    target_folder = parts[-2]
+                                break
+                    except Exception:
+                        pass
+                    
+                    m.append(target_folder, '\\Seen', imaplib.Time2Internaldate(time.time()), msg.as_bytes())
+                    m.logout()
+                    print(f"[✔] Synced dispatched email to IMAP Sent folder ({target_folder}) via {imap_host}")
+                    return True
+            except Exception as e:
+                print(f"[!] Notice: Could not sync to Sent folder on {imap_host}: {e}")
+                continue
+        return False
+
     def send_pitch_email(self, to_email: str, subject: str, body_text: str, 
                          recipient_name: str = "", lead_id: Optional[int] = None) -> Dict[str, Any]:
         """
@@ -289,6 +329,12 @@ class TitanMailer:
                         server.ehlo()
                         server.login(user, password)
                         server.send_message(msg)
+
+                # Auto-sync copy to Webmail Sent folder via IMAP
+                try:
+                    self._sync_to_sent_folder(user, password, host, msg)
+                except Exception as e:
+                    print(f"[!] Sent folder sync notice: {e}")
 
                 return {
                     "success": True,
