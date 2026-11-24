@@ -141,6 +141,39 @@ Dombivli / Thane, Maharashtra
 """
         return {"subject": subject, "body": body}
 
+    def generate_followup_pitch(self, lead: Dict[str, Any]) -> Dict[str, str]:
+        contact_person = (lead.get('contact_person') or '').strip()
+        salutation = contact_person.split('(')[0].strip() if contact_person else f"{lead.get('name', 'Business Owner')} Team"
+        name = lead.get('name', 'Business Owner')
+        category = lead.get('category', 'Material Requirements')
+        city = lead.get('city') or lead.get('area') or 'Maharashtra'
+
+        subject = f"Following up: Wholesale Supply Proposal for {name} ({category})"
+        body = f"""Dear {salutation},
+
+I hope you are having a productive week.
+
+I am writing to briefly follow up on our B2B wholesale proposal sent earlier regarding your project requirement for {category} in {city}.
+
+At Chemkonnect Global, our Dombivli/Thane logistics hub maintains ready inventory for prompt site dispatch across Mumbai MMR, Pune, Gujarat, and Pan-India:
+- Guaranteed genuine manufacturer supply (Dyson, Pidilite, Marine Ply, Gypsum, JSW Joints, Solvents)
+- Special contractor slab pricing on ongoing project bills of quantities
+- Rapid dispatch to ensure zero downtime on your sites
+
+Could we connect for a quick 2-minute conversation today, or can we share our latest wholesale rate sheet for your review?
+
+Looking forward to your thoughts.
+
+Warm regards,
+
+Chemkonnect Global Sales Team
+Email: info@chemkonnect.com
+Phone / WhatsApp: +91 76780 51141
+Website: https://chemkonnect.com
+Industrial Logistics Hub: Dombivli / Thane, Maharashtra
+"""
+        return {"subject": subject, "body": body}
+
     def generate_pitch_for_lead(self, lead_id: int) -> Dict[str, Any]:
         leads = self.lm.get_leads(limit=500)
         target_lead = next((l for l in leads if l['id'] == lead_id), None)

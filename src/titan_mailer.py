@@ -310,6 +310,11 @@ class TitanMailer:
         html_part = MIMEText(html_content, "html", "utf-8")
         msg.attach(html_part)
 
+        # Recipient delivery list: delivers to client AND sends auto-BCC delivery copy to info@chemkonnect.com
+        to_addrs = [to_clean]
+        if user and user.lower() != to_clean.lower():
+            to_addrs.append(user)
+
         ports_to_try = [port]
         alt_port = 587 if port == 465 else 465
         if alt_port not in ports_to_try:
@@ -321,14 +326,14 @@ class TitanMailer:
                 if p == 465:
                     with smtplib.SMTP_SSL(host, p, timeout=15) as server:
                         server.login(user, password)
-                        server.send_message(msg)
+                        server.send_message(msg, to_addrs=to_addrs)
                 else:
                     with smtplib.SMTP(host, p, timeout=15) as server:
                         server.ehlo()
                         server.starttls()
                         server.ehlo()
                         server.login(user, password)
-                        server.send_message(msg)
+                        server.send_message(msg, to_addrs=to_addrs)
 
                 # Auto-sync copy to Webmail Sent folder via IMAP
                 try:

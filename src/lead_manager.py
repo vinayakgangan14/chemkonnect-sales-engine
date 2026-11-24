@@ -86,6 +86,7 @@ def init_db(db_path: str = DB_PATH):
             """)
             try:
                 cursor.execute("ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_person TEXT DEFAULT '';")
+                cursor.execute("ALTER TABLE leads ADD COLUMN IF NOT EXISTS last_pitched_at TIMESTAMP;")
             except Exception:
                 pass
             cursor.execute("""
@@ -121,6 +122,7 @@ def init_db(db_path: str = DB_PATH):
                     pitch_draft TEXT,
                     deal_tier TEXT DEFAULT 'Tier C - Recurring',
                     estimated_deal_value INTEGER DEFAULT 50000,
+                    last_pitched_at TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(name, phone)
@@ -131,6 +133,8 @@ def init_db(db_path: str = DB_PATH):
             columns = [row["name"] for row in cursor.fetchall()]
             if "contact_person" not in columns:
                 cursor.execute("ALTER TABLE leads ADD COLUMN contact_person TEXT DEFAULT ''")
+            if "last_pitched_at" not in columns:
+                cursor.execute("ALTER TABLE leads ADD COLUMN last_pitched_at TIMESTAMP")
             if "deal_tier" not in columns:
                 cursor.execute("ALTER TABLE leads ADD COLUMN deal_tier TEXT DEFAULT 'Tier C - Recurring'")
             if "estimated_deal_value" not in columns:
@@ -205,6 +209,27 @@ def init_db(db_path: str = DB_PATH):
                        OR name LIKE '%Inquiry #%'
                        OR name LIKE '%(Inquiry%'
                        OR source LIKE '%Pan-India Live RFQ Stream%'
+                """)
+
+            # Backfill last_pitched_at for any previously pitched leads
+            if IS_POSTGRES:
+                cursor.execute("""
+                    UPDATE leads l
+                    SET last_pitched_at = sub.max_sent
+                    FROM (
+                        SELECT lead_id, MAX(sent_at) as max_sent
+                        FROM outreach_history
+                        WHERE status = 'Sent' AND lead_id IS NOT NULL
+                        GROUP BY lead_id
+                    ) sub
+                    WHERE l.id = sub.lead_id AND l.last_pitched_at IS NULL;
+                """)
+            else:
+                cursor.execute("""
+                    UPDATE leads
+                    SET last_pitched_at = (SELECT MAX(sent_at) FROM outreach_history WHERE lead_id = leads.id AND status = 'Sent')
+                    WHERE id IN (SELECT lead_id FROM outreach_history WHERE status = 'Sent' AND lead_id IS NOT NULL)
+                      AND last_pitched_at IS NULL;
                 """)
         except Exception:
             pass
@@ -477,6 +502,37 @@ class LeadManager:
                     d["created_at"] = str(d["created_at"])
                 if d.get("updated_at") is not None:
                     d["updated_at"] = str(d["updated_at"])
+                if d.get("last_pitched_at") is not None:
+                    d["last_pitched_at"] = str(d["last_pitched_at"])
+                else:
+                    d["last_pitched_at"] = ""
+
+                # 48-hour follow-up calculation
+                if d["last_pitched_at"]:
+                    try:
+                        lp_clean = d["last_pitched_at"].split("+")[0].strip()
+                        lp_dt = None
+                        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+                            try:
+                                lp_dt = datetime.strptime(lp_clean, fmt)
+                                break
+                            except ValueError:
+                                pass
+                        if lp_dt:
+                            elapsed_hours = (datetime.utcnow() - lp_dt).total_seconds() / 3600.0
+                            rem_hours = max(0.0, 48.0 - elapsed_hours)
+                            d["followup_remaining_hours"] = round(rem_hours, 1)
+                            d["followup_due"] = elapsed_hours >= 48.0
+                        else:
+                            d["followup_remaining_hours"] = None
+                            d["followup_due"] = False
+                    except Exception:
+                        d["followup_remaining_hours"] = None
+                        d["followup_due"] = False
+                else:
+                    d["followup_remaining_hours"] = None
+                    d["followup_due"] = False
+
                 if "contact_person" not in d or d["contact_person"] is None:
                     d["contact_person"] = ""
                 age_info = self.compute_lead_age(d.get("created_at"))
@@ -625,9 +681,12 @@ class LeadManager:
                 """, (lead_id, (recipient_name or "").strip(), recipient_email.strip(), sender_email.strip(), subject.strip(), body.strip(), status, error_message))
                 outreach_id = cursor.lastrowid
             
-            # If successfully sent, update lead status to 'Pitched'
+            # If successfully sent, update lead status to 'Pitched' and record last_pitched_at
             if status == "Sent" and lead_id:
-                cursor.execute(f"UPDATE leads SET status = 'Pitched', updated_at = {p} WHERE id = {p}", (datetime.now().isoformat(), lead_id))
+                if IS_POSTGRES:
+                    cursor.execute(f"UPDATE leads SET status = 'Pitched', last_pitched_at = CURRENT_TIMESTAMP, updated_at = {p} WHERE id = {p}", (datetime.now().isoformat(), lead_id))
+                else:
+                    cursor.execute(f"UPDATE leads SET status = 'Pitched', last_pitched_at = datetime('now'), updated_at = {p} WHERE id = {p}", (datetime.now().isoformat(), lead_id))
             
             conn.commit()
             return outreach_id

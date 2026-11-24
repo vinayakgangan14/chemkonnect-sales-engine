@@ -102,7 +102,15 @@ def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier
         leads = lm.get_leads(category=category, status=status, deal_tier=tier, max_days_old=max_days_old, limit=1000)
         if search:
             s = search.lower()
-            leads = [l for l in leads if s in l["name"].lower() or s in l["category"].lower() or s in l["city"].lower() or s in (l["phone"] or "")]
+            leads = [
+                l for l in leads 
+                if s in l["name"].lower() 
+                or s in l["category"].lower() 
+                or s in l["city"].lower() 
+                or s in (l.get("phone") or "") 
+                or s in (l.get("email") or "").lower() 
+                or s in (l.get("contact_person") or "").lower()
+            ]
         
         for l in leads:
             loc = f"{l['city']} {l['area'] or ''}"
@@ -342,6 +350,23 @@ def save_titan_creds(req: TitanCredsRequest):
         "status": "success",
         "message": "Titan Mail credentials verified and saved successfully!",
         "sender_email": req.user
+    }
+
+@app.get("/api/leads/{lead_id}/followup-pitch")
+def get_lead_followup_pitch(lead_id: int):
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    pitch_dict = pitcher.generate_followup_pitch(target)
+    return {
+        "status": "success",
+        "lead_id": lead_id,
+        "company": target.get("name"),
+        "recipient_email": target.get("email"),
+        "contact_person": target.get("contact_person"),
+        "subject": pitch_dict.get("subject"),
+        "body": pitch_dict.get("body")
     }
 
 @app.post("/api/leads/{lead_id}/send-pitch-email")
