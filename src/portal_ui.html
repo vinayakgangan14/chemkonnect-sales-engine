@@ -319,9 +319,9 @@
                     <span class="text-slate-400">Company:</span>
                     <span id="titan-pitch-company" class="font-bold text-white">--</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-slate-400">Recipient Email:</span>
-                    <span id="titan-pitch-email" class="font-bold text-cyan-300 font-mono">--</span>
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-400 text-xs shrink-0">Recipient Email:</span>
+                    <input id="titan-pitch-recipient-input" type="email" placeholder="Enter recipient email (e.g. purchase@company.com)" class="bg-slate-950 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500 flex-1 max-w-sm text-right">
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-slate-400">Contact Person:</span>
@@ -667,11 +667,9 @@
                                         <i class="fa-brands fa-whatsapp text-xs"></i>
                                     </a>
                                 ` : ''}
-                                ${l.email ? `
-                                    <button onclick="openTitanPitchModal(${l.id})" title="Send B2B Pitch via Titan Mail (GoDaddy)" class="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition">
-                                        <i class="fa-solid fa-paper-plane text-xs"></i>
-                                    </button>
-                                ` : ''}
+                                <button onclick="openTitanPitchModal(${l.id})" title="Send B2B Pitch via Titan Mail (GoDaddy)" class="p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 transition shadow-sm">
+                                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                                </button>
                                 ${l.email_url ? `
                                     <a href="${l.email_url}" target="_blank" title="Send Email Quote (Default Mail App)" class="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition">
                                         <i class="fa-regular fa-envelope text-xs"></i>
@@ -1041,17 +1039,16 @@
         function openTitanPitchModal(leadId) {
             const lead = allLeads.find(l => l.id === leadId);
             if (!lead) return;
-            if (!lead.email) {
-                alert("This lead does not have a verified email address.");
-                return;
-            }
 
             const titleEl = document.getElementById("titan-modal-title");
             if (titleEl) titleEl.innerText = "Send B2B Pitch via Titan Mail";
 
             document.getElementById("titan-lead-id").value = lead.id;
             document.getElementById("titan-pitch-company").innerText = lead.name;
-            document.getElementById("titan-pitch-email").innerText = lead.email;
+            const recipientInput = document.getElementById("titan-pitch-recipient-input");
+            if (recipientInput) {
+                recipientInput.value = lead.email || "";
+            }
             document.getElementById("titan-pitch-contact").innerText = lead.contact_person || "Procurement Team";
 
             const city = lead.city || lead.area || "Maharashtra";
@@ -1085,6 +1082,9 @@ Dombivli / Thane, Maharashtra`;
 
             document.getElementById("titan-pitch-body").value = body;
             document.getElementById("titan-pitch-modal").classList.remove("hidden");
+            if (!lead.email && recipientInput) {
+                setTimeout(() => recipientInput.focus(), 150);
+            }
         }
 
         function closeTitanPitchModal() {
@@ -1093,9 +1093,17 @@ Dombivli / Thane, Maharashtra`;
 
         async function dispatchTitanPitch() {
             const leadId = parseInt(document.getElementById("titan-lead-id").value);
+            const recipientInput = document.getElementById("titan-pitch-recipient-input");
+            const recipientEmail = recipientInput ? recipientInput.value.trim() : "";
             const subject = document.getElementById("titan-pitch-subject").value.trim();
             const body = document.getElementById("titan-pitch-body").value.trim();
             const btn = document.getElementById("btn-dispatch-titan");
+
+            if (!recipientEmail || !recipientEmail.includes("@")) {
+                alert("Please enter a valid recipient email address to dispatch this pitch.");
+                if (recipientInput) recipientInput.focus();
+                return;
+            }
 
             if (!subject || !body) {
                 alert("Please ensure both subject and proposal body are provided.");
@@ -1109,7 +1117,7 @@ Dombivli / Thane, Maharashtra`;
                 const res = await fetch(`/api/leads/${leadId}/send-pitch-email`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ subject, body })
+                    body: JSON.stringify({ subject, body, recipient_email: recipientEmail })
                 });
                 const data = await res.json();
                 if (data.status === "success") {
@@ -1119,6 +1127,7 @@ Dombivli / Thane, Maharashtra`;
                     const targetLead = allLeads.find(l => l.id === leadId);
                     if (targetLead) {
                         targetLead.status = "Pitched";
+                        targetLead.email = recipientEmail;
                         targetLead.last_pitched_at = new Date().toISOString();
                     }
                     renderLeads();

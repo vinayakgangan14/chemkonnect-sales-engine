@@ -70,6 +70,7 @@ class TitanCredsRequest(BaseModel):
 class SendPitchRequest(BaseModel):
     subject: Optional[str] = None
     body: Optional[str] = None
+    recipient_email: Optional[str] = None
 
 class AutoPitchRequest(BaseModel):
     limit: int = 10
@@ -376,9 +377,17 @@ def send_lead_pitch_email(lead_id: int, req: Optional[SendPitchRequest] = None):
     if not target:
         raise HTTPException(status_code=404, detail="Lead not found")
     
-    recipient_email = (target.get("email") or "").strip()
+    recipient_email = ""
+    if req and req.recipient_email and req.recipient_email.strip():
+        recipient_email = req.recipient_email.strip()
+        # Save to lead record if lead had no email or updated
+        if recipient_email != (target.get("email") or "").strip():
+            lm.update_lead(lead_id=lead_id, email=recipient_email)
+    else:
+        recipient_email = (target.get("email") or "").strip()
+        
     if not recipient_email or "@" not in recipient_email:
-        raise HTTPException(status_code=400, detail="Lead does not have a verified email address.")
+        raise HTTPException(status_code=400, detail="Please provide a valid recipient email address.")
     
     # Generate tailored pitch if not custom supplied
     if req and req.subject and req.body:
