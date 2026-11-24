@@ -569,34 +569,6 @@
                     ageBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30" title="Older than 7 days (${escapeHtml(l.created_at || '')})"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> ${days} days old</span>`;
                 }
 
-                let followUpBadge = '';
-                let isFollowUpDue = false;
-                if (l.status === 'Pitched' || l.last_pitched_at) {
-                    let sentTime = null;
-                    if (l.last_pitched_at) {
-                        const cleanStr = l.last_pitched_at.replace(' ', 'T').split('+')[0];
-                        sentTime = new Date(cleanStr + 'Z').getTime();
-                        if (isNaN(sentTime)) {
-                            sentTime = new Date(l.last_pitched_at).getTime();
-                        }
-                    }
-                    if (sentTime && !isNaN(sentTime)) {
-                        const elapsedMs = Date.now() - sentTime;
-                        const totalDurationMs = 48 * 3600 * 1000;
-                        const remainingMs = totalDurationMs - elapsedMs;
-                        if (remainingMs > 0) {
-                            const remHours = Math.floor(remainingMs / (3600 * 1000));
-                            const remMins = Math.floor((remainingMs % (3600 * 1000)) / (60 * 1000));
-                            followUpBadge = `<div class="mt-1"><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40" title="Email sent on ${escapeHtml(l.last_pitched_at)}. 48-hour follow-up timer active."><i class="fa-solid fa-hourglass-half text-amber-400"></i> Follow-up in ${remHours}h ${remMins}m</span></div>`;
-                        } else {
-                            isFollowUpDue = true;
-                            followUpBadge = `<div class="mt-1"><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/30 animate-pulse" title="48 hours elapsed since proposal sent! Follow-up is now due."><i class="fa-solid fa-bell text-rose-400"></i> Follow-up DUE</span></div>`;
-                        }
-                    } else {
-                        followUpBadge = `<div class="mt-1"><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40"><i class="fa-solid fa-hourglass-half text-amber-400"></i> 48h Timer Active</span></div>`;
-                    }
-                }
-
                 const isCore = l.priority_zone.includes("High Priority");
                 const isExport = l.priority_zone.includes("Export");
                 const zoneBadge = isCore 
@@ -644,7 +616,6 @@
                         <td class="py-2.5 px-3 whitespace-nowrap">
                             <div class="text-slate-500 font-mono text-xs">#${l.id}</div>
                             <div class="mt-0.5">${ageBadge}</div>
-                            ${followUpBadge}
                         </td>
                         <td class="py-2.5 px-3">
                             <div class="font-semibold text-white truncate" title="${escapeHtml(l.name)}">${escapeHtml(l.name)}</div>
@@ -672,48 +643,46 @@
                             </div>
                         </td>
                         <td class="py-2.5 px-3">
-                            <select onchange="updateLeadStatus(${l.id}, this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-1.5 py-1 text-slate-200 focus:outline-none w-full">
-                                <option value="New" ${l.status === 'New' ? 'selected' : ''}>New</option>
-                                <option value="Pitched" ${l.status === 'Pitched' ? 'selected' : ''}>Pitched</option>
-                                <option value="Contacted" ${l.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
-                                <option value="Won" ${l.status === 'Won' ? 'selected' : ''}>Won</option>
-                            </select>
+                            <div class="space-y-1">
+                                <select onchange="updateLeadStatus(${l.id}, this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-2 py-1 text-slate-200 focus:outline-none w-full">
+                                    <option value="New" ${l.status === 'New' ? 'selected' : ''}>New</option>
+                                    <option value="Pitched" ${l.status === 'Pitched' ? 'selected' : ''}>Pitched</option>
+                                    <option value="Contacted" ${l.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
+                                    <option value="Won" ${l.status === 'Won' ? 'selected' : ''}>Won</option>
+                                </select>
+                                ${l.status === 'Pitched' ? `
+                                    <div class="text-[10px] text-amber-300 font-bold flex items-center gap-1 whitespace-nowrap">
+                                        <i class="fa-regular fa-clock text-amber-400"></i> Follow-up after 48 hrs
+                                    </div>
+                                ` : ''}
+                            </div>
                         </td>
                         <td class="py-2.5 px-3 text-right sticky-action-cell">
-                            <div class="flex items-center justify-end gap-1">
-                                ${isFollowUpDue ? `
-                                    <button onclick="openFollowUpModal(${l.id})" title="48h Follow-up DUE! Click to send follow-up pitch via Titan Mail" class="px-2 py-1 rounded bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-white font-bold text-[10px] shadow-sm shadow-rose-500/30 transition flex items-center gap-1">
-                                        <i class="fa-solid fa-reply"></i> Follow-up
-                                    </button>
-                                ` : (l.status === 'Pitched' && l.email) ? `
-                                    <button onclick="openFollowUpModal(${l.id})" title="Send Follow-up Proposal via Titan Mail" class="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition">
-                                        <i class="fa-solid fa-reply text-xs"></i>
-                                    </button>
-                                ` : ''}
-                                <button onclick="enrichLead(${l.id})" title="Search & Verify Real Email / Contact Person" class="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="enrichLead(${l.id})" title="Search & Verify Real Email / Contact Person" class="p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition">
                                     <i class="fa-solid fa-id-card-clip text-xs"></i>
                                 </button>
                                 ${l.whatsapp_url ? `
-                                    <a href="${l.whatsapp_url}" target="_blank" title="Send WhatsApp Message" class="p-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 transition">
+                                    <a href="${l.whatsapp_url}" target="_blank" title="Send WhatsApp Message" class="p-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 transition">
                                         <i class="fa-brands fa-whatsapp text-xs"></i>
                                     </a>
                                 ` : ''}
                                 ${l.email ? `
-                                    <button onclick="openTitanPitchModal(${l.id})" title="Send B2B Pitch via Titan Mail (GoDaddy)" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition">
+                                    <button onclick="openTitanPitchModal(${l.id})" title="Send B2B Pitch via Titan Mail (GoDaddy)" class="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition">
                                         <i class="fa-solid fa-paper-plane text-xs"></i>
                                     </button>
                                 ` : ''}
                                 ${l.email_url ? `
-                                    <a href="${l.email_url}" target="_blank" title="Send Email Quote (Default Mail App)" class="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition">
+                                    <a href="${l.email_url}" target="_blank" title="Send Email Quote (Default Mail App)" class="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition">
                                         <i class="fa-regular fa-envelope text-xs"></i>
                                     </a>
                                 ` : ''}
                                 ${l.source_url && l.source_url.startsWith('http') ? `
-                                    <a href="${l.source_url}" target="_blank" title="Open Web Source / Page" class="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 transition">
+                                    <a href="${l.source_url}" target="_blank" title="Open Web Source / Page" class="p-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 transition">
                                         <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                     </a>
                                 ` : ''}
-                                <button onclick="openPitchModal(${l.id})" title="View / Copy Pitch" class="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 transition">
+                                <button onclick="openPitchModal(${l.id})" title="View / Copy Pitch" class="p-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 transition">
                                     <i class="fa-regular fa-comment-dots text-xs"></i>
                                 </button>
                             </div>
@@ -1118,55 +1087,6 @@ Dombivli / Thane, Maharashtra`;
             document.getElementById("titan-pitch-modal").classList.remove("hidden");
         }
 
-        function openFollowUpModal(leadId) {
-            const lead = allLeads.find(l => l.id === leadId);
-            if (!lead) return;
-            if (!lead.email) {
-                alert("This lead does not have a verified email address.");
-                return;
-            }
-
-            const titleEl = document.getElementById("titan-modal-title");
-            if (titleEl) titleEl.innerText = "Send 48-Hour Follow-Up via Titan Mail";
-
-            document.getElementById("titan-lead-id").value = lead.id;
-            document.getElementById("titan-pitch-company").innerText = lead.name;
-            document.getElementById("titan-pitch-email").innerText = lead.email;
-            document.getElementById("titan-pitch-contact").innerText = lead.contact_person || "Procurement Team";
-
-            const city = lead.city || lead.area || "Maharashtra";
-            const cat = lead.category || "Building Materials";
-            const subject = `Following up: Wholesale Supply Proposal for ${lead.name} (${cat})`;
-            document.getElementById("titan-pitch-subject").value = subject;
-
-            const salutation = lead.contact_person ? lead.contact_person.split('(')[0].trim() : `${lead.name} Team`;
-            const body = `Dear ${salutation},
-
-I hope you are having a productive week.
-
-I am writing to briefly follow up on our B2B wholesale proposal sent earlier regarding your project requirement for ${cat} in ${city}.
-
-At Chemkonnect Global, our Dombivli/Thane logistics hub maintains ready inventory for prompt site dispatch across Mumbai MMR, Pune, Gujarat, and Pan-India:
-• Guaranteed genuine manufacturer supply (Dyson, Pidilite, Marine Ply, Gypsum, JSW Joints, Solvents)
-• Special contractor slab pricing on ongoing project bills of quantities
-• Rapid dispatch to ensure zero downtime on your ongoing sites
-
-Could we connect for a quick 2-minute conversation today, or can we share our latest wholesale rate sheet for your review?
-
-Looking forward to your thoughts.
-
-Warm regards,
-
-Sales Desk | Chemkonnect Global
-Phone / WhatsApp: +91 76780 51141
-Email: info@chemkonnect.com
-Website: https://chemkonnect.com
-Industrial Logistics Hub: Dombivli / Thane, Maharashtra`;
-
-            document.getElementById("titan-pitch-body").value = body;
-            document.getElementById("titan-pitch-modal").classList.remove("hidden");
-        }
-
         function closeTitanPitchModal() {
             document.getElementById("titan-pitch-modal").classList.add("hidden");
         }
@@ -1324,17 +1244,6 @@ Industrial Logistics Hub: Dombivli / Thane, Maharashtra`;
         window.onload = async () => {
             await fetchLeads();
             await fetchTitanStatus();
-
-            // Real-time 30-second live countdown ticker
-            setInterval(() => {
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                    return;
-                }
-                if (allLeads && allLeads.some(l => l.status === 'Pitched' || l.last_pitched_at)) {
-                    renderLeads();
-                }
-            }, 30000);
         };
     </script>
 </body>
