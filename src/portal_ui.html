@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Chemkonnect Global | Maharashtra B2B Sales Hub</title>
     <!-- Tailwind CSS (Fast CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,242 +15,250 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                            900: '#0c4a6e',
-                        }
+                    screens: {
+                        'xs': '420px',
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            -webkit-tap-highlight-color: transparent;
+        }
         .table-row-hover:hover { background-color: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Mobile safe-area support for iPhone notch & home indicator */
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .safe-pt { padding-top: env(safe-area-inset-top, 0); }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 flex flex-col antialiased">
+<body class="min-h-screen text-slate-800 flex flex-col antialiased safe-pt safe-pb">
 
-    <!-- Top Navigation Bar (Clean & Lightweight) -->
+    <!-- Adaptive Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-700 flex items-center justify-center text-white font-black text-lg shadow-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Brand & Region Badge -->
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-700 flex items-center justify-center text-white font-black text-sm sm:text-lg shadow-sm shrink-0">
                     CK
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Chemkonnect Global</h1>
-                        <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Maharashtra Focus
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                        <h1 class="text-sm sm:text-lg font-bold text-slate-900 tracking-tight truncate">Chemkonnect Global</h1>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                            Maharashtra
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 hidden sm:block">
+                    <p class="text-[11px] text-slate-500 hidden md:block truncate">
                         Authorized Dealerships: Gypsum Boards • Plywoods • Pidilite Products • Dyson Systems • Expansion Joints
                     </p>
                 </div>
             </div>
 
-            <!-- Header Actions -->
-            <div class="flex items-center gap-2">
+            <!-- Top Actions -->
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button onclick="refreshLeads()" class="p-2 text-slate-600 hover:text-sky-600 hover:bg-slate-100 rounded-lg transition" title="Refresh leads">
-                    <i class="fa-solid fa-rotate text-sm"></i>
+                    <i class="fa-solid fa-rotate text-xs sm:text-sm"></i>
                 </button>
-                <a href="/api/export" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition">
+                <a href="/api/export" class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition">
                     <i class="fa-solid fa-file-csv text-emerald-600"></i>
-                    <span>Export CSV</span>
+                    <span class="hidden xs:inline">Export</span>
                 </a>
-                <a href="https://app.titan.email/" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                <a href="https://app.titan.email/" target="_blank" class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
                     <i class="fa-solid fa-envelope"></i>
-                    <span>Titan Webmail</span>
+                    <span class="hidden xs:inline">Titan Mail</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
-        <!-- Metrics Overview (Light, Fast Cards) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Metric 1: ₹100 Cr Progress -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <!-- Responsive Metrics Overview Grid (2 cols on mobile, 4 cols on PC) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <!-- Metric 1: Pipeline Value -->
+            <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div>
-                    <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <span>Maharashtra Pipeline</span>
+                    <div class="flex justify-between items-center text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span>Pipeline</span>
                         <i class="fa-solid fa-trophy text-amber-500"></i>
                     </div>
-                    <div class="mt-2 flex items-baseline gap-2">
-                        <span id="hero-pipeline-crores" class="text-2xl font-black text-slate-900">₹8.32 Cr</span>
-                        <span class="text-xs text-slate-500">of ₹100 Cr Target</span>
+                    <div class="mt-1 sm:mt-2 flex items-baseline gap-1.5">
+                        <span id="hero-pipeline-crores" class="text-lg sm:text-2xl font-black text-slate-900">₹8.32 Cr</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 hidden xs:inline">/ ₹100 Cr Target</span>
                     </div>
                 </div>
-                <div class="mt-3">
-                    <div class="w-full bg-slate-100 rounded-full h-2">
-                        <div id="hero-progress-bar" class="bg-amber-500 h-2 rounded-full" style="width: 8.32%"></div>
+                <div class="mt-2 sm:mt-3">
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 sm:h-2">
+                        <div id="hero-progress-bar" class="bg-amber-500 h-1.5 sm:h-2 rounded-full" style="width: 8.32%"></div>
                     </div>
-                    <div class="flex justify-between text-[11px] text-slate-400 mt-1">
-                        <span>Day 1: ₹8.32 Cr</span>
+                    <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-400 mt-1">
+                        <span>Progress</span>
                         <span id="hero-pct" class="font-semibold text-amber-600">8.32%</span>
                     </div>
                 </div>
             </div>
 
             <!-- Metric 2: Mega Accounts -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <span>Tier A Mega Accounts</span>
+            <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <span>Mega Accounts</span>
                     <i class="fa-solid fa-crown text-amber-500"></i>
                 </div>
-                <div id="stat-tier-a" class="text-2xl font-black text-slate-900 mt-2">22 Accounts</div>
-                <div class="text-xs text-slate-500 mt-1">Godrej, Lodha, Ashish Interbuild (>₹10L)</div>
+                <div id="stat-tier-a" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">22 Leads</div>
+                <div class="text-[10px] sm:text-xs text-slate-500 mt-1 truncate">Godrej, Ashish (>₹10L)</div>
             </div>
 
-            <!-- Metric 3: Verified Key Decision Makers -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <span>Key Decision Makers</span>
+            <!-- Metric 3: Decision Makers -->
+            <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <span>Key Contacts</span>
                     <i class="fa-solid fa-user-check text-emerald-500"></i>
                 </div>
-                <div id="stat-verified-contacts" class="text-2xl font-black text-slate-900 mt-2">100% Verified</div>
-                <div class="text-xs text-slate-500 mt-1">MDs, Procurement Heads, Materials Leads</div>
+                <div id="stat-verified-contacts" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">100% Verified</div>
+                <div class="text-[10px] sm:text-xs text-slate-500 mt-1 truncate">MDs & Procurement Heads</div>
             </div>
 
-            <!-- Metric 4: 1-Click Action Queue -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <span>Ready for Outreach</span>
+            <!-- Metric 4: Action Queue -->
+            <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <span>Ready to Pitch</span>
                     <i class="fa-solid fa-paper-plane text-sky-500"></i>
                 </div>
-                <div id="stat-new-leads" class="text-2xl font-black text-sky-600 mt-2">-- Leads</div>
-                <div class="text-xs text-slate-500 mt-1">1-Click Titan Mail & WhatsApp</div>
+                <div id="stat-new-leads" class="text-lg sm:text-2xl font-black text-sky-600 mt-1 sm:mt-2">-- Leads</div>
+                <div class="text-[10px] sm:text-xs text-slate-500 mt-1 truncate">1-Click Titan Mail & WhatsApp</div>
             </div>
         </div>
 
-        <!-- Filter & Search Toolbar (Single Clean Row) -->
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <!-- Search Box -->
-                <div class="relative flex-1 max-w-md">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
-                    <input id="search-input" oninput="debounceFetch()" type="text" placeholder="Search company, key person, city, or product..." class="w-full bg-slate-50 border border-slate-200 pl-9 pr-4 py-2 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition">
+        <!-- Filter & Search Toolbar (Responsive & Swipeable on Mobile) -->
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-2.5 sm:space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 sm:top-3 text-slate-400 text-xs sm:text-sm"></i>
+                    <input id="search-input" oninput="debounceFetch()" type="text" placeholder="Search company, key person, city, or phone..." class="w-full bg-slate-50 border border-slate-200 pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition">
                 </div>
 
-                <!-- City Filter & Status Filter -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <select id="filter-city" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                        <option value="ALL">📍 All Maharashtra</option>
+                <!-- Dropdown Selectors -->
+                <div class="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2">
+                    <select id="filter-city" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 truncate">
+                        <option value="ALL">📍 All MH</option>
                         <option value="Mumbai">Mumbai MMR</option>
                         <option value="Thane">Thane</option>
                         <option value="Dombivli">Dombivli / Kalyan</option>
                         <option value="Pune">Pune</option>
-                        <option value="Navi Mumbai">Navi Mumbai / Panvel</option>
+                        <option value="Navi Mumbai">Navi Mumbai</option>
                     </select>
 
-                    <select id="filter-status" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                        <option value="ALL">📌 All Statuses</option>
-                        <option value="New">New (Unpitched)</option>
+                    <select id="filter-status" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 truncate">
+                        <option value="ALL">📌 Status</option>
+                        <option value="New">New</option>
                         <option value="Pitched">Pitched</option>
                         <option value="Contacted">Contacted</option>
                         <option value="Won">Won</option>
                     </select>
 
-                    <select id="filter-tier" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                        <option value="ALL">💰 All Deal Tiers</option>
-                        <option value="Tier A">Tier A - Mega (>₹10L)</option>
-                        <option value="Tier B">Tier B - Project (₹2L-10L)</option>
+                    <select id="filter-tier" onchange="renderLeads()" class="bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 truncate">
+                        <option value="ALL">💰 Tier</option>
+                        <option value="Tier A">Tier A (>₹10L)</option>
+                        <option value="Tier B">Tier B (₹2L-10L)</option>
                     </select>
+                </div>
+            </div>
 
-                    <button onclick="clearAllFilters()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Reset all filters">
-                        <i class="fa-solid fa-xmark text-slate-400"></i> Clear
+            <!-- Product Category Swipeable Bar (Smooth touch horizontal scroll on iPhone/Android) -->
+            <div class="pt-2 border-t border-slate-100">
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                    <button onclick="setCategoryFilter('ALL')" id="tab-cat-ALL" class="cat-pill active shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-sky-600 text-white transition">
+                        All Products (<span id="count-all">--</span>)
+                    </button>
+                    <button onclick="setCategoryFilter('gypsum')" id="tab-cat-gypsum" class="cat-pill shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Gypsum Boards
+                    </button>
+                    <button onclick="setCategoryFilter('plywood')" id="tab-cat-plywood" class="cat-pill shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Plywoods & BWP 710
+                    </button>
+                    <button onclick="setCategoryFilter('pidilite')" id="tab-cat-pidilite" class="cat-pill shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Pidilite & Dr. Fixit
+                    </button>
+                    <button onclick="setCategoryFilter('dyson')" id="tab-cat-dyson" class="cat-pill shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Dyson Commercial
+                    </button>
+                    <button onclick="setCategoryFilter('joints')" id="tab-cat-joints" class="cat-pill shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Expansion Joints
                     </button>
                 </div>
             </div>
-
-            <!-- Product Category Quick-Filter Tabs -->
-            <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
-                <span class="text-xs font-semibold text-slate-400 mr-1">Products:</span>
-                <button onclick="setCategoryFilter('ALL')" id="tab-cat-ALL" class="cat-pill active px-3 py-1 rounded-full text-xs font-semibold bg-sky-600 text-white transition">
-                    All Products (<span id="count-all">38</span>)
-                </button>
-                <button onclick="setCategoryFilter('gypsum')" id="tab-cat-gypsum" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                    Gypsum Boards
-                </button>
-                <button onclick="setCategoryFilter('plywood')" id="tab-cat-plywood" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                    Plywoods & BWP 710
-                </button>
-                <button onclick="setCategoryFilter('pidilite')" id="tab-cat-pidilite" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                    Pidilite & Dr. Fixit
-                </button>
-                <button onclick="setCategoryFilter('dyson')" id="tab-cat-dyson" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                    Dyson Commercial
-                </button>
-                <button onclick="setCategoryFilter('joints')" id="tab-cat-joints" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                    Expansion Joints
-                </button>
-            </div>
         </div>
 
-        <!-- Clean, High-Contrast Leads Table -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900 text-sm">Verified Maharashtra Accounts</span>
-                    <span id="filtered-lead-count" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">--</span>
-                </div>
-                <div class="text-xs text-slate-500">
-                    Click <b><i class="fa-solid fa-paper-plane text-sky-600"></i> Blue Button</b> to generate pre-filled draft in Titan Mail / Desktop Mail.
-                </div>
+        <!-- Section Header Bar -->
+        <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-900 text-xs sm:text-sm">Verified Maharashtra Accounts</span>
+                <span id="filtered-lead-count" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">--</span>
             </div>
+            <button onclick="clearAllFilters()" class="text-xs text-sky-600 font-semibold hover:underline">
+                Reset Filters
+            </button>
+        </div>
 
+        <!-- 1. MOBILE CARDS VIEW (iPhone & Android View: < 768px) -->
+        <div id="leads-cards-container" class="block md:hidden space-y-3">
+            <!-- Dynamically populated on Mobile -->
+        </div>
+
+        <!-- 2. DESKTOP / PC TABLE VIEW (PC & Tablet View: >= 768px) -->
+        <div class="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs divide-y divide-slate-100">
                     <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th class="py-3 px-4 min-w-[240px]">Company & Project</th>
-                            <th class="py-3 px-3.5 min-w-[170px]">Product Requirement</th>
-                            <th class="py-3 px-3 min-w-[130px]">Location</th>
-                            <th class="py-3 px-3.5 min-w-[200px]">Key Decision Maker</th>
-                            <th class="py-3 px-3.5 min-w-[210px]">Contact & Email</th>
-                            <th class="py-3 px-3 min-w-[160px]">Status</th>
-                            <th class="py-3 px-4 min-w-[180px] text-right">1-Click Outreach</th>
+                            <th class="py-3 px-4 min-w-[220px]">Company & Project</th>
+                            <th class="py-3 px-3 min-w-[160px]">Product Requirement</th>
+                            <th class="py-3 px-3 min-w-[120px]">Location</th>
+                            <th class="py-3 px-3.5 min-w-[190px]">Key Decision Maker</th>
+                            <th class="py-3 px-3.5 min-w-[200px]">Contact & Email</th>
+                            <th class="py-3 px-3 min-w-[150px]">Status</th>
+                            <th class="py-3 px-4 min-w-[160px] text-right">Outreach</th>
                         </tr>
                     </thead>
                     <tbody id="leads-table-body" class="divide-y divide-slate-100">
-                        <!-- Loaded dynamically -->
+                        <!-- Loaded dynamically on PC -->
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            <div id="no-leads-message" class="hidden p-12 text-center text-slate-400">
-                <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
-                <p class="text-sm font-medium">No matching accounts found with current filters.</p>
-                <button onclick="clearAllFilters()" class="mt-2 text-xs text-sky-600 font-semibold hover:underline">Clear all filters</button>
-            </div>
+        <!-- Empty State Message -->
+        <div id="no-leads-message" class="hidden bg-white p-8 sm:p-12 text-center rounded-xl border border-slate-200 text-slate-400">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
+            <p class="text-sm font-medium text-slate-600">No matching Maharashtra accounts found.</p>
+            <button onclick="clearAllFilters()" class="mt-2 text-xs text-sky-600 font-semibold hover:underline">Reset all filters</button>
         </div>
 
     </main>
 
-    <!-- Lightweight Proposal Preview Modal -->
-    <div id="preview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white max-w-2xl w-full rounded-2xl p-6 border border-slate-200 space-y-4 shadow-2xl">
+    <!-- Adaptive Proposal Preview Modal (Centered on PC, Bottom-Sheet style on Mobile) -->
+    <div id="preview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white max-w-2xl w-full rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 space-y-3 sm:space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2">
-                    <div class="h-8 w-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-envelope-open-text"></i>
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="h-8 w-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold shrink-0">
+                        <i class="fa-solid fa-envelope-open-text text-sm"></i>
                     </div>
-                    <div>
-                        <h3 id="modal-company-title" class="text-sm font-bold text-slate-900">B2B Wholesale Proposal</h3>
-                        <p id="modal-company-sub" class="text-xs text-slate-500">Prepared for procurement team</p>
+                    <div class="min-w-0">
+                        <h3 id="modal-company-title" class="text-sm font-bold text-slate-900 truncate">Proposal Preview</h3>
+                        <p id="modal-company-sub" class="text-xs text-slate-500 truncate">Tailored B2B Commercial Proposal</p>
                     </div>
                 </div>
                 <button onclick="closePreviewModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
@@ -258,36 +266,38 @@
                 </button>
             </div>
 
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+            <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200 text-xs space-y-1">
                 <div class="flex justify-between">
                     <span class="text-slate-500">Recipient Email:</span>
-                    <span id="modal-recipient-email" class="font-mono font-semibold text-slate-800">--</span>
+                    <span id="modal-recipient-email" class="font-mono font-semibold text-slate-800 truncate max-w-[200px]">--</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-500">Key Decision Maker:</span>
-                    <span id="modal-contact-person" class="font-medium text-slate-800">--</span>
+                    <span id="modal-contact-person" class="font-medium text-slate-800 truncate max-w-[200px]">--</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-500">Subject:</span>
-                    <span id="modal-subject" class="font-semibold text-slate-800 truncate max-w-sm">--</span>
+                    <span id="modal-subject" class="font-semibold text-slate-800 truncate max-w-[200px]">--</span>
                 </div>
             </div>
 
-            <div>
+            <div class="flex-1 overflow-y-auto">
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Proposal Body (Ready to Send):</label>
-                <textarea id="modal-body-textarea" rows="10" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-slate-800 font-mono whitespace-pre-wrap focus:outline-none focus:ring-2 focus:ring-sky-500 custom-scroll"></textarea>
+                <textarea id="modal-body-textarea" rows="8" class="w-full bg-slate-50 border border-slate-200 p-2.5 sm:p-3 rounded-xl text-xs text-slate-800 font-mono whitespace-pre-wrap focus:outline-none focus:ring-2 focus:ring-sky-500 custom-scroll"></textarea>
             </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                <button onclick="closePreviewModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                <button onclick="closePreviewModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
                     Close
                 </button>
                 <div class="flex items-center gap-2">
                     <button onclick="copyModalPitch()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
-                        <i class="fa-regular fa-copy"></i> Copy Text
+                        <i class="fa-regular fa-copy"></i>
+                        <span class="hidden xs:inline">Copy</span>
                     </button>
-                    <button id="modal-launch-btn" onclick="triggerModalLaunch()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                        <i class="fa-solid fa-paper-plane"></i> 🚀 Open in Titan Mail Draft
+                    <button onclick="triggerModalLaunch()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Launch Titan Draft</span>
                     </button>
                 </div>
             </div>
@@ -295,7 +305,7 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none max-w-sm w-full px-3"></div>
 
     <script>
         let allLeads = [];
@@ -313,6 +323,7 @@
                 const res = await fetch('/api/leads?limit=1000');
                 if (!res.ok) throw new Error("Network error fetching leads");
                 const data = await res.json();
+                
                 if (Array.isArray(data)) {
                     allLeads = data;
                 } else if (data && data.leads) {
@@ -327,7 +338,7 @@
                         if (barEl && s.percent_of_100cr_goal) barEl.style.width = `${Math.min(100, s.percent_of_100cr_goal)}%`;
                         const tierAEl = document.getElementById("stat-tier-a");
                         if (tierAEl && s.by_tier && s.by_tier['Tier A - Mega Account']) {
-                            tierAEl.innerText = `${s.by_tier['Tier A - Mega Account'].count} Accounts`;
+                            tierAEl.innerText = `${s.by_tier['Tier A - Mega Account'].count} Leads`;
                         }
                     }
                 } else {
@@ -372,7 +383,7 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 renderLeads();
-            }, 150);
+            }, 120);
         }
 
         function getFilteredLeads() {
@@ -382,7 +393,7 @@
             const tierFilter = document.getElementById("filter-tier").value;
 
             return allLeads.filter(lead => {
-                // Category match
+                // Category filter
                 if (activeCategoryFilter !== 'ALL') {
                     const cat = (lead.category || "").toLowerCase();
                     if (activeCategoryFilter === 'gypsum' && !cat.includes('gypsum') && !cat.includes('ceiling') && !cat.includes('drywall')) return false;
@@ -409,7 +420,7 @@
                 // Tier filter
                 if (tierFilter !== 'ALL' && !(lead.deal_tier || "").includes(tierFilter)) return false;
 
-                // Search text
+                // Search query
                 if (search) {
                     const hay = `${lead.name} ${lead.category} ${lead.city} ${lead.area} ${lead.contact_person} ${lead.phone} ${lead.email}`.toLowerCase();
                     if (!hay.includes(search)) return false;
@@ -422,29 +433,29 @@
         function renderLeads() {
             const filtered = getFilteredLeads();
             const tbody = document.getElementById("leads-table-body");
+            const cardsContainer = document.getElementById("leads-cards-container");
             const countEl = document.getElementById("filtered-lead-count");
             const emptyEl = document.getElementById("no-leads-message");
 
             countEl.innerText = `${filtered.length} of ${allLeads.length} Accounts`;
-            document.getElementById("count-all").innerText = allLeads.length;
+            const countAllEl = document.getElementById("count-all");
+            if (countAllEl) countAllEl.innerText = allLeads.length;
 
             if (filtered.length === 0) {
                 tbody.innerHTML = "";
+                cardsContainer.innerHTML = "";
                 emptyEl.classList.remove("hidden");
                 return;
             }
             emptyEl.classList.add("hidden");
 
+            // 1. RENDER DESKTOP TABLE (>= 768px)
             tbody.innerHTML = filtered.map(lead => {
                 const tierClass = (lead.deal_tier || "").includes("Tier A") 
                     ? "bg-amber-50 text-amber-700 border-amber-200" 
                     : "bg-blue-50 text-blue-700 border-blue-200";
 
                 const isPitched = lead.status === "Pitched";
-                const isContacted = lead.status === "Contacted";
-                const isWon = lead.status === "Won";
-
-                // Contact Person format
                 const contactPerson = lead.contact_person || "Procurement Desk";
                 const phone = lead.phone || "";
                 const cleanPhone = phone.replace(/[^\d+]/g, '');
@@ -465,8 +476,8 @@
                         </td>
 
                         <!-- Product Requirement -->
-                        <td class="py-3 px-3.5">
-                            <span class="inline-block px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200 max-w-[200px] truncate" title="${escapeHtml(lead.category)}">
+                        <td class="py-3 px-3">
+                            <span class="inline-block px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200 max-w-[180px] truncate" title="${escapeHtml(lead.category)}">
                                 ${escapeHtml(lead.category)}
                             </span>
                         </td>
@@ -477,7 +488,7 @@
                                 <i class="fa-solid fa-location-dot text-slate-400 text-[10px]"></i>
                                 ${escapeHtml(lead.city || 'Maharashtra')}
                             </div>
-                            <div class="text-[11px] text-slate-500 truncate max-w-[120px]">${escapeHtml(lead.area || '')}</div>
+                            <div class="text-[11px] text-slate-500 truncate max-w-[110px]">${escapeHtml(lead.area || '')}</div>
                         </td>
 
                         <!-- Key Decision Maker -->
@@ -486,7 +497,7 @@
                                 <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]" title="Verified Key Decision Maker"></i>
                                 <span>${escapeHtml(contactPerson)}</span>
                             </div>
-                            <div class="text-[11px] text-emerald-600 font-medium">✔ Verified Corporate Contact</div>
+                            <div class="text-[11px] text-emerald-600 font-medium">✔ Verified Decision Maker</div>
                         </td>
 
                         <!-- Contact & Email -->
@@ -502,7 +513,7 @@
                             
                             ${email ? `
                                 <div class="mt-0.5">
-                                    <a href="mailto:${email}" class="text-sky-600 hover:underline transition flex items-center gap-1 truncate max-w-[190px]" title="${escapeHtml(email)}">
+                                    <a href="mailto:${email}" class="text-sky-600 hover:underline transition flex items-center gap-1 truncate max-w-[180px]" title="${escapeHtml(email)}">
                                         <i class="fa-regular fa-envelope text-[10px]"></i>
                                         <span>${escapeHtml(email)}</span>
                                     </a>
@@ -530,24 +541,125 @@
                         <!-- 1-Click Outreach Actions -->
                         <td class="py-3 px-4 text-right">
                             <div class="inline-flex items-center gap-1.5">
-                                <!-- Blue Button: 1-Click Titan Mail / Default Mail -->
                                 <button onclick="openTitanMailComposer(${lead.id})" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm" title="1-Click: Injects pre-filled draft into Titan Mail & Desktop Mail client">
                                     <i class="fa-solid fa-paper-plane text-[11px]"></i>
                                     <span>Send Pitch</span>
                                 </button>
 
-                                <!-- WhatsApp Button -->
                                 <a href="${lead.whatsapp_url || '#'}" target="_blank" class="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs transition inline-flex items-center justify-center shadow-sm" title="Chat on WhatsApp Web">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
                                 </a>
 
-                                <!-- Preview Pitch Modal -->
                                 <button onclick="openPreviewModal(${lead.id})" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition" title="Preview Proposal Text">
                                     <i class="fa-regular fa-eye"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
+                `;
+            }).join('');
+
+            // 2. RENDER MOBILE CARDS (< 768px for iPhone / Android)
+            cardsContainer.innerHTML = filtered.map(lead => {
+                const tierClass = (lead.deal_tier || "").includes("Tier A") 
+                    ? "bg-amber-50 text-amber-700 border-amber-200" 
+                    : "bg-blue-50 text-blue-700 border-blue-200";
+
+                const isPitched = lead.status === "Pitched";
+                const contactPerson = lead.contact_person || "Procurement Desk";
+                const phone = lead.phone || "";
+                const cleanPhone = phone.replace(/[^\d+]/g, '');
+                const email = lead.email || "";
+
+                return `
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2.5">
+                        <!-- Top Header: Name, Location, Tier -->
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-tight">${escapeHtml(lead.name)}</h3>
+                                <div class="flex items-center gap-1 mt-1 text-slate-500 text-[11px]">
+                                    <i class="fa-solid fa-location-dot text-slate-400 text-[10px]"></i>
+                                    <span>${escapeHtml(lead.city || 'Maharashtra')}</span>
+                                    ${lead.area ? `<span class="text-slate-400">• ${escapeHtml(lead.area)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold border ${tierClass}">
+                                    ${escapeHtml(lead.deal_tier || 'Tier B')}
+                                </span>
+                                <div class="text-[10px] font-semibold text-slate-500 mt-0.5">₹${(lead.estimated_deal_value / 100000).toFixed(1)}L</div>
+                            </div>
+                        </div>
+
+                        <!-- Product Requirement -->
+                        <div>
+                            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200 max-w-full truncate">
+                                ${escapeHtml(lead.category)}
+                            </span>
+                        </div>
+
+                        <!-- Key Decision Maker -->
+                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-1">
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-[11px]"></i>
+                                <span class="truncate">${escapeHtml(contactPerson)}</span>
+                            </div>
+                            <div class="text-[10px] text-emerald-600 font-medium">✔ Verified Decision Maker</div>
+                            
+                            <!-- Phone & Email Links -->
+                            <div class="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-mono">
+                                ${phone ? `
+                                    <a href="tel:${cleanPhone}" class="text-slate-700 hover:text-sky-600 flex items-center gap-1">
+                                        <i class="fa-solid fa-phone text-slate-400 text-[9px]"></i>
+                                        <span>${escapeHtml(phone)}</span>
+                                    </a>
+                                ` : ''}
+                                ${email ? `
+                                    <a href="mailto:${email}" class="text-sky-600 truncate max-w-[190px] flex items-center gap-1">
+                                        <i class="fa-regular fa-envelope text-[9px]"></i>
+                                        <span>${escapeHtml(email)}</span>
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Status & Follow-up Row -->
+                        <div class="flex items-center justify-between pt-0.5 text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-400 text-[11px]">Status:</span>
+                                <select onchange="updateLeadStatus(${lead.id}, this.value)" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-lg px-2 py-1 text-slate-800 focus:outline-none">
+                                    <option value="New" ${lead.status === 'New' ? 'selected' : ''}>⚪ New</option>
+                                    <option value="Pitched" ${lead.status === 'Pitched' ? 'selected' : ''}>🔵 Pitched</option>
+                                    <option value="Contacted" ${lead.status === 'Contacted' ? 'selected' : ''}>🟡 Contacted</option>
+                                    <option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>🟢 Won</option>
+                                </select>
+                            </div>
+                            ${isPitched ? `
+                                <span class="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                                    <i class="fa-regular fa-clock"></i> 48h Follow-up
+                                </span>
+                            ` : ''}
+                        </div>
+
+                        <!-- Touch-Friendly Mobile Action Buttons -->
+                        <div class="grid grid-cols-5 gap-2 pt-1 border-t border-slate-100">
+                            <!-- Send Pitch Button (3 cols) -->
+                            <button onclick="openTitanMailComposer(${lead.id})" class="col-span-3 py-2.5 px-3 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                                <span>Send Pitch</span>
+                            </button>
+
+                            <!-- WhatsApp Button (1 col) -->
+                            <a href="${lead.whatsapp_url || '#'}" target="_blank" class="col-span-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center shadow-sm">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                            </a>
+
+                            <!-- Preview Modal Button (1 col) -->
+                            <button onclick="openPreviewModal(${lead.id})" class="col-span-1 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 rounded-xl text-xs font-bold transition flex items-center justify-center">
+                                <i class="fa-regular fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
                 `;
             }).join('');
         }
@@ -589,14 +701,16 @@
             // 3. Mark status as Pitched
             updateLeadStatus(leadId, "Pitched");
 
-            // 4. Trigger mailto: opens Titan Mail Desktop App / Windows mail with all fields pre-filled
+            // 4. Trigger mailto: opens Titan Mail Desktop App / Windows/Mobile mail with all fields pre-filled
             const mailtoUrl = `mailto:${encodeURIComponent(recipientEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoUrl;
 
-            // 5. Also open Titan Webmail in background tab
-            setTimeout(() => {
-                window.open("https://app.titan.email/", "_blank");
-            }, 600);
+            // 5. Also open Titan Webmail in background tab (on desktop)
+            if (window.innerWidth > 768) {
+                setTimeout(() => {
+                    window.open("https://app.titan.email/", "_blank");
+                }, 600);
+            }
         }
 
         function generateFallbackPitch(lead) {
@@ -704,16 +818,16 @@ Industrial Logistics Hub: Dombivli / Thane, Maharashtra`;
             const toast = document.createElement("div");
             
             const bgColor = type === "success" ? "bg-emerald-600" : type === "error" ? "bg-rose-600" : "bg-slate-900";
-            toast.className = `${bgColor} text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition duration-200`;
+            toast.className = `${bgColor} text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 transition duration-200`;
             toast.innerHTML = `
                 <i class="fa-solid ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'}"></i>
-                <span>${escapeHtml(message)}</span>
+                <span class="truncate">${escapeHtml(message)}</span>
             `;
             container.appendChild(toast);
             setTimeout(() => {
                 toast.classList.add("opacity-0", "translate-y-2");
                 setTimeout(() => toast.remove(), 200);
-            }, 3000);
+            }, 2500);
         }
 
         function escapeHtml(str) {
