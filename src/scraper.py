@@ -52,12 +52,12 @@ LOCAL_MIDC_SEEDS = [
         "source": "Local Builder Registry"
     },
     {
-        "name": "Kalyan Paint & Chemical Formulations",
-        "category": "Paint & Chemical Manufacturer",
+        "name": "Kalyan Timber & BWP Marine Plywood Stockists",
+        "category": "Plywood & Timber Merchant",
         "city": "Dombivli",
         "area": "Dombivli MIDC Phase 1",
         "phone": "+919702889900",
-        "email": "purchase@kalyanpaints.co.in",
+        "email": "purchase@kalyantimber.co.in",
         "address": "Plot D-8, Cross Road, Dombivli MIDC Phase 1",
         "source": "MIDC Industrial Directory"
     },

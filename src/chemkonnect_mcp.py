@@ -52,8 +52,7 @@ def get_product_catalog(category: Optional[str] = None) -> Dict[str, Any]:
     - construction_chemicals (Dr. Fixit LW+, Fastflex, Raincoat - Authorized Dealer)
     - gypsum_and_ceilings (Plasterboards, GI Channels, Jointing Compound)
     - plywood_and_boards (BWP 710 Marine Ply, MR Ply, Calibrated Core, HDHMR)
-    - structural_and_joints (JSW Expansion Joints, TMT Steel Rods)
-    - industrial_chemicals_and_solvents (Acetone, IPA, Toluene, Ethyl Acetate)
+    - expansion_joints (JSW Expansion Joints & Architectural Movement Joints)
     """
     catalog = pitcher.catalog
     if category:

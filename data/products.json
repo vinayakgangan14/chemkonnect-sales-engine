@@ -156,64 +156,31 @@
         }
       ]
     },
-    "structural_and_joints": {
-      "display_name": "JSW Expansion Joints & TMT Steel",
+    "expansion_joints": {
+      "display_name": "JSW Expansion Joints & Architectural Movement Joints",
       "target_buyers": [
         "Infrastructure Contractors",
         "Civil Builders",
+        "Commercial Turnkey Fit-out Firms",
         "Industrial Warehouse Developers"
       ],
       "products": [
         {
           "name": "JSW Expansion Joints & Architectural Movement Joints",
-          "description": "Heavy-duty floor and wall expansion joint systems accommodating seismic and thermal movement.",
+          "description": "Heavy-duty floor and wall expansion joint systems accommodating seismic, thermal movement, and acoustic sealing.",
           "pack_sizes": [
-            "Custom profiles and linear meters"
+            "Custom profiles and linear meters",
+            "Project lengths (3m / 6m sections)"
           ],
-          "application": "Malls, hospitals, industrial floors, high-rise podiums, airport terminals."
+          "application": "Malls, hospitals, industrial floors, high-rise podiums, airport terminals, commercial towers."
         },
         {
-          "name": "TMT Steel Reinforcement Rods",
-          "description": "High-yield primary steel reinforcement rebars (Fe 500D / 550D).",
+          "name": "Floor-to-Wall & Exterior Facade Expansion Joints",
+          "description": "High-movement architectural joint systems with waterproof seals and fire barriers.",
           "pack_sizes": [
-            "8mm to 32mm bundles / metric tons"
+            "Continuous rolls and modular profiles"
           ],
-          "application": "Foundation, columns, slabs in commercial and residential developments."
-        }
-      ]
-    },
-    "industrial_chemicals_and_solvents": {
-      "display_name": "Industrial Solvents, Resins & Bulk Chemicals",
-      "target_buyers": [
-        "Paint Manufacturers",
-        "Printing Ink Producers",
-        "Pharma API Units",
-        "Chemical Formulators"
-      ],
-      "products": [
-        {
-          "name": "Acetone & IPA (Isopropanol)",
-          "description": "High-purity industrial and pharma grade solvents with manufacturer COA.",
-          "pack_sizes": [
-            "160kg / 200kg drums, tanker loads"
-          ],
-          "application": "Cleaning, solvent formulation, resin thinning, pharma processing."
-        },
-        {
-          "name": "Toluene & Mixed Xylenes",
-          "description": "Aromatic hydrocarbon solvents for coatings, adhesives, and resin manufacturing.",
-          "pack_sizes": [
-            "Drums and bulk tankers"
-          ],
-          "application": "Paints, rubber adhesives, industrial coatings."
-        },
-        {
-          "name": "Ethyl Acetate & Butyl Acetate",
-          "description": "Ester solvents for flexible packaging inks, lacquer, and artificial leather.",
-          "pack_sizes": [
-            "Drums and bulk tankers"
-          ],
-          "application": "Printing packaging, surface coating."
+          "application": "Multi-level podiums, parking basements, bridges, commercial facade junctions."
         }
       ]
     },

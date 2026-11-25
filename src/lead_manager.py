@@ -199,6 +199,14 @@ def init_db(db_path: str = DB_PATH):
                        OR name LIKE '%Inquiry #%'
                        OR name LIKE '%(Inquiry%'
                        OR source LIKE '%Pan-India Live RFQ Stream%'
+                       OR LOWER(category) LIKE '%solvent%'
+                       OR LOWER(category) LIKE '%chemical%'
+                       OR LOWER(category) LIKE '%acetone%'
+                       OR LOWER(category) LIKE '%toluene%'
+                       OR LOWER(category) LIKE '%paint%'
+                       OR LOWER(category) LIKE '%resin%'
+                       OR LOWER(category) LIKE '%pharma%'
+                       OR LOWER(category) LIKE '%intermediate%';
                 """)
             else:
                 cursor.execute("""
@@ -209,6 +217,14 @@ def init_db(db_path: str = DB_PATH):
                        OR name LIKE '%Inquiry #%'
                        OR name LIKE '%(Inquiry%'
                        OR source LIKE '%Pan-India Live RFQ Stream%'
+                       OR LOWER(category) LIKE '%solvent%'
+                       OR LOWER(category) LIKE '%chemical%'
+                       OR LOWER(category) LIKE '%acetone%'
+                       OR LOWER(category) LIKE '%toluene%'
+                       OR LOWER(category) LIKE '%paint%'
+                       OR LOWER(category) LIKE '%resin%'
+                       OR LOWER(category) LIKE '%pharma%'
+                       OR LOWER(category) LIKE '%intermediate%';
                 """)
 
             # Backfill last_pitched_at for any previously pitched leads
@@ -293,12 +309,12 @@ class LeadManager:
     def calculate_deal_tier(self, category: str, query_text: str = "") -> tuple[str, int]:
         """
         Calculates deal tier and estimated value for ₹100 Crore pipeline targets:
-        - Tier A (Mega Accounts > ₹10 Lakhs): Bulk Chemicals, Solvents, Tankers, JSW Expansion Joints, Structural TMT
+        - Tier A (Mega Accounts > ₹10 Lakhs): Dyson Commercial Systems, Turnkey Fitout Giants, High-Rise Projects, JSW Expansion Joints
         - Tier B (Commercial Projects ₹2L - ₹10L): Gypsum Plasterboard Projects, Plywood Truckloads, Dr Fixit Fastflex
         - Tier C (Recurring Flow < ₹2L): Fevicol Retail, Carpentry Packs, Routine Maintenance
         """
         combined = f"{category} {query_text}".lower()
-        if any(k in combined for k in ["solvent", "acetone", "toluene", "tanker", "drum", "chemical", "jsw", "expansion joint", "tmt", "rebar", "infrastructure", "tender", "dyson", "airblade", "hand dryer", "air purifier"]):
+        if any(k in combined for k in ["dyson", "airblade", "hand dryer", "air purifier", "jsw", "expansion joint", "movement joint", "infrastructure", "turnkey", "fitout giant", "tower", "high-rise", "nearing possession"]):
             return "Tier A - Mega Account", 1500000  # Avg 15 Lakhs
         elif any(k in combined for k in ["gypsum", "plasterboard", "false ceiling", "plywood", "bwp", "marine ply", "fitout", "commercial interior", "fastflex", "pidilite", "fevicol", "dr fixit", "waterproofing"]):
             return "Tier B - Commercial Project", 500000  # Avg 5 Lakhs
@@ -318,6 +334,11 @@ class LeadManager:
             "español", "espanol", "microsoft support", "microsoft account",
             "explore types", "what is ", "best 10", "top 10"
         ]):
+            return None
+
+        # Filter out disallowed products (strictly 5 allowed: Gypsum, Plywood, Pidilite, Dyson, Expansion joints)
+        cat_lower = category.lower()
+        if any(disallowed in cat_lower for disallowed in ["solvent", "acetone", "toluene", "chemical", "tanker", "paint", "resin", "intermediate", "pharma api"]):
             return None
 
         phone_clean = phone.strip()

@@ -9,3 +9,4 @@ data/titan_creds.json
 .env
 *.env
 output/*.csv
+scratch/

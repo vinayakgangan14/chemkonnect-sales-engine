@@ -28,26 +28,24 @@ class PitchGenerator:
 
     def match_product_category(self, query_or_category: str) -> str:
         text = query_or_category.lower()
-        # Priority order matching: Check specific keywords first
+        # Priority order matching: Strictly the 5 core product lines
         if any(k in text for k in ['dyson', 'airblade', 'hand dryer', 'air purifier', 'supersonic', 'corrale', 'airwrap', 'commercial washroom']):
             return 'dyson_commercial_products'
         elif any(k in text for k in ['gypsum', 'false ceiling', 'plasterboard', 'ceiling', 'drywall', 'perimeter channel']):
             return 'gypsum_and_ceilings'
-        elif any(k in text for k in ['expansion joint', 'jsw', 'movement joint', 'tmt', 'rebar', 'steel rod']):
-            return 'structural_and_joints'
+        elif any(k in text for k in ['expansion joint', 'jsw', 'movement joint', 'expansion joints']):
+            return 'expansion_joints'
         elif any(k in text for k in ['dr. fixit', 'dr fixit', 'fixit', 'waterproof', 'pidiproof', 'fastflex', 'raincoat', 'roff']):
             return 'construction_chemicals'
         elif any(k in text for k in ['plywood', 'marine ply', 'bwp 710', 'mr grade ply', 'calibrated ply', 'hdhmr', 'shuttering ply', 'ply']):
             return 'plywood_and_boards'
         elif any(k in text for k in ['fevicol', 'pidilite', 'adhesive', 'sh', 'marine adhesive', 'heatx', 'probond', 'carpenter', 'modular', 'm-seal', 'mseal']):
             return 'pidilite_adhesives'
-        elif any(k in text for k in ['chemical', 'solvent', 'acetone', 'toluene', 'ipa', 'isopropanol', 'acetate', 'resin', 'paint', 'pharma', 'intermediate']):
-            return 'industrial_chemicals_and_solvents'
         elif any(k in text for k in ['civil', 'builder', 'contractor', 'concrete']):
             return 'construction_chemicals'
         elif any(k in text for k in ['interior', 'designer', 'architect']):
             return 'gypsum_and_ceilings'
-        return 'pidilite_adhesives'
+        return 'gypsum_and_ceilings'
 
     def classify_region_priority(self, location: str) -> str:
         loc_lower = (location or "").lower()
@@ -110,35 +108,37 @@ Best regards,
         matched_cat = self.catalog['categories'].get(matched_cat_key, {})
         
         products_list = matched_cat.get('products', [])
-        product_bullets = "\n".join([f"- **{p['name']}**: {p['application']} (Available in: {', '.join(p['pack_sizes'])})" for p in products_list])
+        if products_list:
+            product_bullets = "\n".join([f"• {p['name']}: {p['application']}" for p in products_list[:3]])
+        else:
+            product_bullets = "• Authorized Project Supply: Gypsum Ceiling & Drywall Systems, Certified Plywood (BWP 710 Marine / Calibrated), Pidilite Commercial Adhesives & Chemicals, Dyson Professional Systems, and JSW Expansion Joints"
 
-        subject = f"B2B Material Supply & Distributor Pricing for {name} ({city})"
+        subject = f"Wholesale Material Supply & Distributor Pricing - {name} ({city})"
         
         body = f"""Dear {salutation},
 
-I hope this message finds you well.
+I hope this email finds you well.
 
-I am reaching out from Chemkonnect Global, an authorized distributor and industrial supplier headquartered in Dombivli/Thane.
+I am writing to you from Chemkonnect Global, an authorized distributor and industrial supply partner headquartered in our Dombivli/Thane logistics hub.
 
-For your requirements in {city}, we maintain dedicated inventory with rapid logistics across Mumbai, Navi Mumbai, Pune, Maharashtra, Gujarat, and Pan-India:
+Regarding your ongoing requirements for {category} in {city}, we maintain dedicated inventory with direct manufacturer supply and prompt site logistics across Mumbai MMR, Pune, Gujarat, and Pan-India:
 
 {product_bullets}
 
 Why partner with Chemkonnect Global?
-1. Authorized Direct Distribution: Dyson Professional commercial systems (Airblade hand dryers, HEPA air purifiers), Pidilite adhesives & chemicals (Fevicol, Dr. Fixit, Roff, M-Seal), Certified Plywood (BWP 710/MR), Gypsum ceiling systems, JSW expansion joints, and industrial bulk solvents.
-2. Competitive Project Tiers: Dedicated contractor wholesale pricing for ongoing turnkey interiors, real estate towers, and commercial fit-outs.
-3. Rapid Site Dispatch: Ready inventory in our Dombivli/Thane hub ensures zero project downtime across India.
+1. Authorized Direct Dealership: Gypsum false ceiling systems (boards, GI channels, drywall studs), BWP 710 Marine & Calibrated Plywood, Pidilite commercial adhesives & chemicals (Fevicol SH/Marine/HeatX, Dr. Fixit Fastflex waterproofing, Roff, M-Seal), Dyson Professional commercial systems (Airblade hand dryers, HEPA air purifiers), and JSW architectural expansion joints.
+2. Competitive Project Slab Tiers: Dedicated contractor wholesale pricing for ongoing turnkey interiors, residential towers, and commercial fit-outs. Full GST invoice billing on all dispatches.
+3. Rapid Site Dispatch: Ready inventory in our Dombivli / Thane warehouse ensures zero project downtime on your sites.
 
-Could we share our commercial rate card or prepare a customized quote for your upcoming requirements?
+Could we share our latest wholesale commercial rate sheet with your procurement desk, or prepare a customized project estimate for your site?
 
 Warm regards,
 
-Chemkonnect Global Sales Team
+Sales Desk | Chemkonnect Global
+Phone / WhatsApp: +91 76780 51141
 Email: info@chemkonnect.com
-Phone: +91 76780 51141
 Website: https://chemkonnect.com
-Dombivli / Thane, Maharashtra
-"""
+Industrial Logistics Hub: Dombivli / Thane, Maharashtra"""
         return {"subject": subject, "body": body}
 
     def generate_followup_pitch(self, lead: Dict[str, Any]) -> Dict[str, str]:
@@ -156,7 +156,7 @@ I hope you are having a productive week.
 I am writing to briefly follow up on our B2B wholesale proposal sent earlier regarding your project requirement for {category} in {city}.
 
 At Chemkonnect Global, our Dombivli/Thane logistics hub maintains ready inventory for prompt site dispatch across Mumbai MMR, Pune, Gujarat, and Pan-India:
-- Guaranteed genuine manufacturer supply (Dyson, Pidilite, Marine Ply, Gypsum, JSW Joints, Solvents)
+- Guaranteed genuine manufacturer supply (Gypsum Boards, Marine Plywood, Pidilite, Dyson, JSW Expansion Joints)
 - Special contractor slab pricing on ongoing project bills of quantities
 - Rapid dispatch to ensure zero downtime on your sites
 

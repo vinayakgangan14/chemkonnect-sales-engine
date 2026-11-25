@@ -80,18 +80,21 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Kirti Nagar Timber & Marine Plywood Contractors", "contact_person": "Harpreet Singh (General Manager)", "email": "harpreet@kirtinagartimber.co.in", "area": "Kirti Nagar Timber Market, Delhi", "phone": "+919811556677", "tier": "Tier A - Mega Account", "value": 1650000}
         ]
     },
-    "chemicals": {
+    "expansion_joints": {
         "Mumbai": [
-            {"name": "Rabale Bulk Solvent & Chemical Storage Desk", "contact_person": "Rajiv Deshmukh (Commercial Head)", "email": "procure@rabalesolvents.com", "area": "Rabale MIDC, Navi Mumbai", "phone": "+919820778899", "tier": "Tier A - Mega Account", "value": 2500000},
-            {"name": "Taloja Petrochem & Resin Manufacturing Hub", "contact_person": "Naveen Agarwal (Director Procurement)", "email": "supply@talojapetrochem.in", "area": "Taloja MIDC, Navi Mumbai", "phone": "+919819667788", "tier": "Tier A - Mega Account", "value": 3000000},
-            {"name": "Dombivli Industrial Solvents & Intermediate Traders", "contact_person": "Ashok Joshi (Managing Partner)", "email": "ashok@dombivlisolvents.co.in", "area": "Dombivli MIDC Phase 2", "phone": "+919892778899", "tier": "Tier A - Mega Account", "value": 2200000}
+            {"name": "MMR Architectural Joint & Floor Movement Systems", "contact_person": "Kunal Singhania (Head of Procurement)", "email": "procurement@mmrjoints.in", "area": "BKC / Kurla West, Mumbai", "phone": "+919820778899", "tier": "Tier A - Mega Account", "value": 2400000},
+            {"name": "Metro High-Rise Expansion Systems & Fire Barriers", "contact_person": "Naveen Agarwal (Director)", "email": "supply@metroseals.in", "area": "Andheri East, Mumbai", "phone": "+919819667788", "tier": "Tier A - Mega Account", "value": 1800000},
+            {"name": "Thane Structural Expansion Joint Contractors", "contact_person": "Ashok Joshi (Managing Partner)", "email": "ashok@thanejoints.co.in", "area": "Wagle Estate, Thane", "phone": "+919892778899", "tier": "Tier B - Commercial Project", "value": 1200000}
         ],
         "Gujarat": [
-            {"name": "Vapi Bulk Chemical & Solvent Processing Units", "contact_person": "Mukesh Desai (Executive Director)", "email": "m.desai@vapichemicals.in", "area": "GIDC Vapi, Gujarat", "phone": "+919825667788", "tier": "Tier A - Mega Account", "value": 3500000},
-            {"name": "Ankleshwar Pharma Intermediate Solvent Tanker Desk", "contact_person": "Gaurav Shah (Supply Chain VP)", "email": "tankers@ankleshwarpharma.com", "area": "GIDC Ankleshwar", "phone": "+919824778899", "tier": "Tier A - Mega Account", "value": 4000000}
+            {"name": "Gujarat Infrastructure Expansion & Movement Joints Hub", "contact_person": "Mukesh Desai (Executive Director)", "email": "m.desai@gujaratjoints.in", "area": "Sanand GIDC, Ahmedabad", "phone": "+919825667788", "tier": "Tier A - Mega Account", "value": 2600000},
+            {"name": "Surat Commercial Podiums & Seismic Joint Systems", "contact_person": "Gaurav Shah (Supply Chain VP)", "email": "projects@suratjoints.com", "area": "Ring Road, Surat", "phone": "+919824778899", "tier": "Tier A - Mega Account", "value": 1900000}
         ],
         "Pune": [
-            {"name": "Pune Industrial Paint & Resin Solvent Buyers", "contact_person": "Subhash Patil (Purchase Head)", "email": "procure@punesolventbuyers.com", "area": "Bhosari MIDC, Pune", "phone": "+919822667788", "tier": "Tier A - Mega Account", "value": 2000000}
+            {"name": "Pune Commercial Towers & IT Park Joint Systems", "contact_person": "Subhash Patil (Purchase Head)", "email": "procure@punejoints.com", "area": "Hinjewadi Phase 2, Pune", "phone": "+919822667788", "tier": "Tier A - Mega Account", "value": 1750000}
+        ],
+        "Delhi NCR": [
+            {"name": "Delhi NCR Architectural Movement & Seismic Joints Co", "contact_person": "Sunil Varma (Chief Project Engineer)", "email": "contracts@delhijoints.in", "area": "Okhla Phase 1, New Delhi", "phone": "+919811667788", "tier": "Tier A - Mega Account", "value": 2200000}
         ]
     },
     "waterproofing": {
@@ -181,9 +184,9 @@ class RecentWebLeadHarvester:
             return "gypsum"
         elif any(w in k for w in ["ply", "board", "wood", "bwp", "marine"]):
             return "plywood"
-        elif any(w in k for w in ["solvent", "acetone", "toluene", "chemical", "tanker", "ipa", "acetate"]):
-            return "chemicals"
-        return "waterproofing"
+        elif any(w in k for w in ["expansion joint", "joint", "movement joint", "seismic"]):
+            return "expansion_joints"
+        return "gypsum"
 
     def find_fresh_leads(self, 
                           product_keyword: str = "Gypsum board", 

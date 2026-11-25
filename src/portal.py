@@ -101,6 +101,9 @@ def debug_status():
 def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier: Optional[str] = None, search: Optional[str] = None, max_days_old: Optional[int] = 7):
     try:
         leads = lm.get_leads(category=category, status=status, deal_tier=tier, max_days_old=max_days_old, limit=1000)
+        # Strictly limit region to Maharashtra (Mumbai MMR, Thane, Dombivli, Kalyan, Bhiwandi, Pune, Navi Mumbai, Panvel)
+        mh_cities = {'mumbai', 'thane', 'dombivli', 'kalyan', 'bhiwandi', 'pune', 'navi mumbai', 'panvel', 'maharashtra'}
+        leads = [l for l in leads if any(c in (l.get('city') or '').lower() or c in (l.get('area') or '').lower() for c in mh_cities)]
         if search:
             s = search.lower()
             leads = [
@@ -133,8 +136,10 @@ def get_leads(category: Optional[str] = None, status: Optional[str] = None, tier
             l["whatsapp_url"] = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(parts)}" if clean_phone else ""
 
             email = (l.get("email") or "").strip()
-            email_subj = f"Wholesale Quote: {l.get('category')} - Chemkonnect Global (Dombivli Hub)"
-            l["email_url"] = f"mailto:{email}?subject={urllib.parse.quote(email_subj)}&body={urllib.parse.quote(parts)}" if email else ""
+            email_pitch_data = pitcher.generate_email_pitch(l)
+            l["email_subject"] = email_pitch_data["subject"]
+            l["email_body"] = email_pitch_data["body"]
+            l["email_url"] = f"mailto:{email}?subject={urllib.parse.quote(email_pitch_data['subject'])}&body={urllib.parse.quote(email_pitch_data['body'])}" if email else ""
 
             src = (l.get("source") or "").strip()
             if src.startswith("http"):
@@ -258,7 +263,8 @@ async def autonomous_pan_india_hourly_harvester():
         ("Drywall False Ceiling", "Hyderabad"),
         ("JSW Expansion Joint", "Mumbai"),
         ("Commercial Plywood", "Chennai"),
-        ("Chemical Solvent", "Vapi")
+        ("JSW Expansion Joint", "Ahmedabad"),
+        ("Gypsum False Ceiling", "Pune")
     ]
     
     while True:
