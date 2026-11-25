@@ -251,20 +251,18 @@ async def autonomous_pan_india_hourly_harvester():
     """
     await asyncio.sleep(15)
     pan_india_keywords = [
+        ("Gypsum False Ceiling", "Mumbai"),
+        ("Gypsum False Ceiling", "Thane"),
+        ("Gypsum False Ceiling", "Pune"),
+        ("BWP Marine Plywood", "Bhiwandi"),
+        ("Commercial Plywood", "Dombivli"),
+        ("Fevicol Marine Adhesive", "Mumbai"),
+        ("Dr Fixit Fastflex", "Navi Mumbai"),
         ("Dyson Airblade", "Mumbai"),
-        ("Dyson Commercial", "Bangalore"),
-        ("Dyson Airblade", "Delhi NCR"),
-        ("Fevicol Adhesive", "Gujarat"),
-        ("Dr Fixit Fastflex", "Delhi NCR"),
-        ("Pidilite Adhesive", "Mumbai"),
-        ("Gypsum False Ceiling", "Maharashtra"),
-        ("Marine Plywood", "Surat"),
-        ("Commercial Fitout", "Bangalore"),
-        ("Drywall False Ceiling", "Hyderabad"),
+        ("Dyson Air Purifier Commercial", "Pune"),
         ("JSW Expansion Joint", "Mumbai"),
-        ("Commercial Plywood", "Chennai"),
-        ("JSW Expansion Joint", "Ahmedabad"),
-        ("Gypsum False Ceiling", "Pune")
+        ("Architectural Movement Joint", "Thane"),
+        ("Commercial Turnkey Interior", "Kalyan")
     ]
     
     while True:

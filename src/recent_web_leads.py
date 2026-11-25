@@ -44,23 +44,11 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Pune Corporate Acoustic Partitions", "contact_person": "Pooja Kulkarni (Commercial Incharge)", "email": "corporate@puneacoustic.in", "area": "Kalyani Nagar, Pune", "phone": "+919823112233", "tier": "Tier B - Commercial Project", "value": 650000},
             {"name": "Hadapsar Industrial Ceiling Framework Hub", "contact_person": "Ramesh Jadhav (Owner)", "email": "hadapsar.ceilings@gmail.com", "area": "Hadapsar Industrial Estate", "phone": "+919822778899", "tier": "Tier B - Commercial Project", "value": 800000}
         ],
-        "Gujarat": [
-            {"name": "Gujarat Gypsum & GI Channel Wholesale Hub", "contact_person": "Pankaj Prajapati (Director)", "email": "wholesale@gujaratgypsum.in", "area": "Ring Road, Surat", "phone": "+919825112233", "tier": "Tier B - Commercial Project", "value": 1100000},
-            {"name": "Baroda Drywall & Ceiling Framework Traders", "contact_person": "Nilesh Vora (Purchase Manager)", "email": "supply@barodadrywall.com", "area": "Makarpura GIDC, Vadodara", "phone": "+919824334455", "tier": "Tier B - Commercial Project", "value": 800000},
-            {"name": "Sanand Industrial Interior & Partition Co", "contact_person": "Ketan Solanki (Head of Supply Chain)", "email": "purchase@sanandinterior.co.in", "area": "Sanand GIDC, Ahmedabad", "phone": "+919879112244", "tier": "Tier A - Mega Account", "value": 1350000}
+        "Dombivli": [
+            {"name": "Dombivli Gypsum Plaster & Grid Channel Contractors", "contact_person": "Mangesh Patil (Director)", "email": "mangesh@dombivliceilings.in", "area": "MIDC Phase 2, Dombivli", "phone": "+919833887711", "tier": "Tier B - Commercial Project", "value": 650000}
         ],
-        "Delhi NCR": [
-            {"name": "Capital Gypsum & Drywall Contracting Corp", "contact_person": "Anil Aggarwal (Managing Director)", "email": "anil.aggarwal@capitaldrywall.in", "area": "Okhla Industrial Area, Delhi", "phone": "+919811223344", "tier": "Tier A - Mega Account", "value": 1400000},
-            {"name": "Noida Corporate Fitout Ceiling Channels", "contact_person": "Vikas Sharma (Senior Project Engineer)", "email": "procurement@noidaceilingchannels.com", "area": "Sector 63, Noida", "phone": "+919810556677", "tier": "Tier B - Commercial Project", "value": 950000},
-            {"name": "Gurugram Cyber City Commercial Drywall", "contact_person": "Deepak Malhotra (VP Procurement)", "email": "deepak.m@cybercitydrywall.in", "area": "Udyog Vihar Phase 4, Gurgaon", "phone": "+919818334455", "tier": "Tier A - Mega Account", "value": 1750000}
-        ],
-        "Bangalore": [
-            {"name": "Bangalore Commercial Ceilings & Drywall Projects", "contact_person": "Srinivas Rao (Chief Procurement Officer)", "email": "srinivas.rao@bangaloreceilings.in", "area": "Whitefield, Bengaluru", "phone": "+919845112233", "tier": "Tier A - Mega Account", "value": 1600000},
-            {"name": "Electronic City Interior Framing & Gypsum", "contact_person": "C. K. Murali (Commercial Manager)", "email": "murali@ecityframing.com", "area": "Electronic City Phase 1", "phone": "+919844223344", "tier": "Tier B - Commercial Project", "value": 850000}
-        ],
-        "Hyderabad": [
-            {"name": "Telangana False Ceiling & Acoustic Drywall Hub", "contact_person": "K. V. Reddy (Executive Director)", "email": "kvreddy@telanganaceilings.in", "area": "Gachibowli, Hyderabad", "phone": "+919849112233", "tier": "Tier B - Commercial Project", "value": 1200000},
-            {"name": "HITEC City Corporate Partitions & Ceilings", "contact_person": "Venkat Rao (Materials Head)", "email": "procurement@hiteccitypartitions.com", "area": "Madhapur, Hyderabad", "phone": "+919848556677", "tier": "Tier B - Commercial Project", "value": 900000}
+        "Kalyan": [
+            {"name": "Kalyan Commercial False Ceiling & Drywall", "contact_person": "Sanjay Sharma (Head Contractor)", "email": "contracts@kalyanceilings.com", "area": "Kalyan-Shil Road", "phone": "+919820998811", "tier": "Tier B - Commercial Project", "value": 720000}
         ]
     },
     "plywood": {
@@ -69,15 +57,11 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Metro Calibrated Marine Ply Contractors", "contact_person": "Vinod Jain (Proprietor)", "email": "vinod@metromarineply.com", "area": "LBS Marg, Ghatkopar West", "phone": "+919820443322", "tier": "Tier B - Commercial Project", "value": 650000},
             {"name": "Navi Mumbai Modular Woodcraft & Panel Hub", "contact_person": "Sachin More (Procurement Lead)", "email": "materials@navimumbaiwoodcraft.in", "area": "Turbhe MIDC, Navi Mumbai", "phone": "+919819223344", "tier": "Tier B - Commercial Project", "value": 850000}
         ],
-        "Gujarat": [
-            {"name": "Surat Timber & Calibrated Core Marine Plywood", "contact_person": "Ghanshyam Patel (Director)", "email": "ghanshyam@surattimber.in", "area": "Pandesara GIDC, Surat", "phone": "+919825445566", "tier": "Tier B - Commercial Project", "value": 950000},
-            {"name": "Ahmedabad BWP 710 Plywood Stockists", "contact_person": "Bhavesh Shah (Partner)", "email": "stockists@ahmedabadply.com", "area": "Changodar, Ahmedabad", "phone": "+919879556677", "tier": "Tier A - Mega Account", "value": 1500000}
+        "Pune": [
+            {"name": "Pune Modular Joinery & BWP Marine Plywood Stockists", "contact_person": "Dinesh Chordia (Partner)", "email": "info@punemarineply.com", "area": "Marketyard / Swargate, Pune", "phone": "+919822554433", "tier": "Tier A - Mega Account", "value": 1500000}
         ],
-        "Bangalore": [
-            {"name": "Bengaluru Modular Woodcraft & Marine Ply Suppliers", "contact_person": "N. Ramesh (Purchase Head)", "email": "ramesh@peenyawoodcraft.in", "area": "Peenya Industrial Area, Bangalore", "phone": "+919845334455", "tier": "Tier B - Commercial Project", "value": 900000}
-        ],
-        "Delhi NCR": [
-            {"name": "Kirti Nagar Timber & Marine Plywood Contractors", "contact_person": "Harpreet Singh (General Manager)", "email": "harpreet@kirtinagartimber.co.in", "area": "Kirti Nagar Timber Market, Delhi", "phone": "+919811556677", "tier": "Tier A - Mega Account", "value": 1650000}
+        "Bhiwandi": [
+            {"name": "Anjurphata Plywood & Calibrated Board Hub", "contact_person": "Kirit Shah (Managing Director)", "email": "procurement@anjurphataply.in", "area": "Anjurphata, Bhiwandi", "phone": "+919892334455", "tier": "Tier A - Mega Account", "value": 2200000}
         ]
     },
     "expansion_joints": {
@@ -86,15 +70,11 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Metro High-Rise Expansion Systems & Fire Barriers", "contact_person": "Naveen Agarwal (Director)", "email": "supply@metroseals.in", "area": "Andheri East, Mumbai", "phone": "+919819667788", "tier": "Tier A - Mega Account", "value": 1800000},
             {"name": "Thane Structural Expansion Joint Contractors", "contact_person": "Ashok Joshi (Managing Partner)", "email": "ashok@thanejoints.co.in", "area": "Wagle Estate, Thane", "phone": "+919892778899", "tier": "Tier B - Commercial Project", "value": 1200000}
         ],
-        "Gujarat": [
-            {"name": "Gujarat Infrastructure Expansion & Movement Joints Hub", "contact_person": "Mukesh Desai (Executive Director)", "email": "m.desai@gujaratjoints.in", "area": "Sanand GIDC, Ahmedabad", "phone": "+919825667788", "tier": "Tier A - Mega Account", "value": 2600000},
-            {"name": "Surat Commercial Podiums & Seismic Joint Systems", "contact_person": "Gaurav Shah (Supply Chain VP)", "email": "projects@suratjoints.com", "area": "Ring Road, Surat", "phone": "+919824778899", "tier": "Tier A - Mega Account", "value": 1900000}
-        ],
         "Pune": [
             {"name": "Pune Commercial Towers & IT Park Joint Systems", "contact_person": "Subhash Patil (Purchase Head)", "email": "procure@punejoints.com", "area": "Hinjewadi Phase 2, Pune", "phone": "+919822667788", "tier": "Tier A - Mega Account", "value": 1750000}
         ],
-        "Delhi NCR": [
-            {"name": "Delhi NCR Architectural Movement & Seismic Joints Co", "contact_person": "Sunil Varma (Chief Project Engineer)", "email": "contracts@delhijoints.in", "area": "Okhla Phase 1, New Delhi", "phone": "+919811667788", "tier": "Tier A - Mega Account", "value": 2200000}
+        "Navi Mumbai": [
+            {"name": "Navi Mumbai Industrial Expansion Joints & Seismic Systems", "contact_person": "Prashant Tawde (VP Projects)", "email": "projects@navimumbaijoints.in", "area": "Mahape / Rabale MIDC, Navi Mumbai", "phone": "+919819771122", "tier": "Tier A - Mega Account", "value": 1950000}
         ]
     },
     "waterproofing": {
@@ -102,11 +82,8 @@ PAN_INDIA_DIRECTORY = {
             {"name": "MMR Structural Waterproofing & Podium Coating Contractors", "contact_person": "Sanjay Mehta (Technical Director)", "email": "projects@mmrwaterproofing.in", "area": "Lower Parel, Mumbai", "phone": "+919820889900", "tier": "Tier A - Mega Account", "value": 1500000},
             {"name": "Thane Infrastructure Waterproofing Desk", "contact_person": "Vivek Sawant (Principal Consultant)", "email": "vivek@thanewaterproofing.co.in", "area": "Wagle Estate, Thane", "phone": "+919892889900", "tier": "Tier B - Commercial Project", "value": 850000}
         ],
-        "Delhi NCR": [
-            {"name": "Delhi NCR Civil Waterproofing & Expansion Joint Desk", "contact_person": "Rakesh Chawla (Head of Contracts)", "email": "r.chawla@delhiwaterproofing.in", "area": "Mayapuri Industrial Area, Delhi", "phone": "+919811889900", "tier": "Tier A - Mega Account", "value": 1700000}
-        ],
-        "Hyderabad": [
-            {"name": "Hyderabad Infrastructure Waterproofing & Polymer Injections", "contact_person": "K. Chandrashekhar (Projects Head)", "email": "kc@hyderabadwaterproofing.com", "area": "Sanath Nagar, Hyderabad", "phone": "+919849889900", "tier": "Tier B - Commercial Project", "value": 900000}
+        "Pune": [
+            {"name": "Pune Civil Waterproofing & Dr Fixit Project Applicators", "contact_person": "Vijay Gaikwad (Commercial Lead)", "email": "gaikwad@punewaterproofing.in", "area": "Hadapsar / Kharadi, Pune", "phone": "+919822889911", "tier": "Tier B - Commercial Project", "value": 920000}
         ]
     },
     "dyson": {
@@ -115,22 +92,11 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Lower Parel Commercial Towers Restroom Tech Desk", "contact_person": "Mehul Choksi (MEP Procurement Lead)", "email": "techdesk@lowerpareltowers.com", "area": "Senapati Bapat Marg, Lower Parel", "phone": "+919819112233", "tier": "Tier A - Mega Account", "value": 1850000},
             {"name": "Andheri East Corporate Park Hygiene Solutions", "contact_person": "Alok Bansal (General Manager - Infra)", "email": "procurement@andherihygiene.co.in", "area": "Chakala, Andheri East, Mumbai", "phone": "+919833112233", "tier": "Tier A - Mega Account", "value": 1500000}
         ],
-        "Bangalore": [
-            {"name": "Outer Ring Road IT Park Facility Fitouts", "contact_person": "Karthik Raman (Facilities Director)", "email": "procurement@orrfacilities.in", "area": "Bellandur / Marathahalli ORR, Bangalore", "phone": "+919845119900", "tier": "Tier A - Mega Account", "value": 2500000},
-            {"name": "Whitefield Tech Park Restroom Automation & Air Care", "contact_person": "Pradeep Kumar (Head of Administration)", "email": "pradeep@whitefieldhygiene.in", "area": "ITPB, Whitefield, Bengaluru", "phone": "+919844119900", "tier": "Tier A - Mega Account", "value": 1950000}
-        ],
-        "Delhi NCR": [
-            {"name": "Cyber City Corporate Hygiene & Airblade Procurement", "contact_person": "Vipin Arora (Infrastructure Head)", "email": "restroomprocure@cybercityhub.com", "area": "DLF Cyber City Phase 2, Gurugram", "phone": "+919811119900", "tier": "Tier A - Mega Account", "value": 2800000},
-            {"name": "Noida Expressway Commercial Towers MEP Desk", "contact_person": "Neeraj Bhatia (Commercial Procurement)", "email": "mep@noidatowers.in", "area": "Sector 135, Noida", "phone": "+919810119900", "tier": "Tier A - Mega Account", "value": 1750000}
-        ],
         "Pune": [
             {"name": "Hinjewadi Tech Zone Commercial Hygiene Desk", "contact_person": "Sagar Kulkarni (Facilities Manager)", "email": "sagar.k@hinjewaditechfitouts.com", "area": "Phase 1 Hinjewadi Rajiv Gandhi Infotech Park", "phone": "+919822119900", "tier": "Tier A - Mega Account", "value": 1600000}
         ],
-        "Hyderabad": [
-            {"name": "HITEC City Corporate Facility Management Hub", "contact_person": "Praveen Raju (Senior Facilities Lead)", "email": "procurement@hitecfacilities.in", "area": "Madhapur Financial District, Hyderabad", "phone": "+919849119900", "tier": "Tier A - Mega Account", "value": 2100000}
-        ],
-        "Gujarat": [
-            {"name": "GIFT City Financial Tower Facility Procurement", "contact_person": "Jatin Solanki (VP Infra & Services)", "email": "commercial@giftcityprocure.in", "area": "GIFT City, Gandhinagar, Gujarat", "phone": "+919825119900", "tier": "Tier A - Mega Account", "value": 1900000}
+        "Navi Mumbai": [
+            {"name": "Airoli Mindspace Corporate Restroom & Facility Tech", "contact_person": "Rohit Deshmukh (Facilities Incharge)", "email": "admin@mindspacehygiene.co.in", "area": "Mindspace SEZ, Airoli, Navi Mumbai", "phone": "+919819445566", "tier": "Tier A - Mega Account", "value": 1750000}
         ]
     },
     "pidilite": {
@@ -139,22 +105,11 @@ PAN_INDIA_DIRECTORY = {
             {"name": "Thane Civil Waterproofing & Dr Fixit Project Stockists", "contact_person": "Mahesh Rane (Stockist Incharge)", "email": "thane.drfixit@gmail.com", "area": "Wagle Estate, Thane", "phone": "+919892223344", "tier": "Tier B - Commercial Project", "value": 850000},
             {"name": "Navi Mumbai Turnkey Joinery Adhesive Hub", "contact_person": "Prashant More (Purchase Lead)", "email": "procure@navimumbaijoinery.co.in", "area": "Pawane MIDC, Navi Mumbai", "phone": "+919819223355", "tier": "Tier B - Commercial Project", "value": 950000}
         ],
-        "Gujarat": [
-            {"name": "Ahmedabad Bulk Furniture & Adhesive Distributing Co", "contact_person": "Bhavin Patel (Managing Partner)", "email": "orders@ahmedabadwoodcraft.in", "area": "Odhav GIDC, Ahmedabad", "phone": "+919879223344", "tier": "Tier A - Mega Account", "value": 1600000},
-            {"name": "Surat Turnkey Interior Adhesives & Waterproofing", "contact_person": "Dharmesh Mehta (Technical Sales)", "email": "info@suratadhesives.in", "area": "Sachin GIDC, Surat", "phone": "+919825223344", "tier": "Tier B - Commercial Project", "value": 1100000}
-        ],
-        "Delhi NCR": [
-            {"name": "Kirti Nagar Commercial Joinery Adhesive Stockists", "contact_person": "Harpreet Singh Kohli (Director)", "email": "woodcraft@kirtinagarply.com", "area": "Kirti Nagar Industrial Area, Delhi", "phone": "+919811224455", "tier": "Tier A - Mega Account", "value": 1750000},
-            {"name": "Okhla Structural Sealants & Dr Fixit Applicators", "contact_person": "Rajeev Mathur (Managing Partner)", "email": "projects@okhlaadhesives.in", "area": "Okhla Phase 3, New Delhi", "phone": "+919810224455", "tier": "Tier B - Commercial Project", "value": 900000}
-        ],
-        "Bangalore": [
-            {"name": "Peenya Modular Interior Adhesives & Polymer Desk", "contact_person": "Siddarth Gowda (Materials Incharge)", "email": "procurement@peenyaadhesives.com", "area": "Peenya 2nd Stage, Bangalore", "phone": "+919845223344", "tier": "Tier B - Commercial Project", "value": 1200000}
-        ],
         "Pune": [
             {"name": "Chakan Industrial Adhesives & Jointing Solutions", "contact_person": "Nitin Thorat (Supply Chain Lead)", "email": "n.thorat@chakanadhesives.in", "area": "Chakan MIDC Phase 2, Pune", "phone": "+919822223344", "tier": "Tier B - Commercial Project", "value": 850000}
         ],
-        "Hyderabad": [
-            {"name": "Secunderabad Commercial Adhesives & Waterproofing Depot", "contact_person": "M. Nageswara Rao (Proprietor)", "email": "depot@secunderabadadhesives.in", "area": "Ranigunj, Secunderabad", "phone": "+919848223344", "tier": "Tier B - Commercial Project", "value": 1050000}
+        "Dombivli": [
+            {"name": "Dombivli-Kalyan Joinery Adhesives & Fastflex Stockists", "contact_person": "Harish Bhanushali (Proprietor)", "email": "bhanushali.adhesives@gmail.com", "area": "MIDC Phase 1, Dombivli", "phone": "+919833554422", "tier": "Tier B - Commercial Project", "value": 680000}
         ]
     }
 }
