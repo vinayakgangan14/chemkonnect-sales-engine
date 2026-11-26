@@ -200,7 +200,9 @@ class RecentWebLeadHarvester:
                             'olx', 'quikr', 'nairaland', 'ndtv', 'moneycontrol', 'livemint', 'economictimes', 'timesofindia',
                             'hindustantimes', 'business-standard', 'sugar', 'tomato', 'potato', 'chana', 'egg', 'flours',
                             'recruitment', 'job', 'freshers', 'salary', 'resume', 'expo 20', 'exhibition in', 'guidelines',
-                            'licensing', 'dgca', 'passenger', 'flight', 'visa', 'fascia grey', 'spare parts'
+                            'licensing', 'dgca', 'passenger', 'flight', 'visa', 'fascia grey', 'spare parts',
+                            'types of', ' vs ', 'which is best', 'difference between', 'how to', 
+                            'best price', 'what is', 'cost of', 'guide', 'ideas', 'photo frame', 'tips for'
                         ]):
                             continue
 
@@ -211,7 +213,7 @@ class RecentWebLeadHarvester:
                             "dyson": ["dyson", "airblade", "hand dryer", "dryer", "air purifier", "purifier", "restroom", "hygiene", "facility"],
                             "gypsum": ["gypsum", "ceiling", "drywall", "channel", "plaster", "plasterboard", "partition", "acoustic", "interior"],
                             "plywood": ["plywood", "marine ply", "bwp", "timber", "board", "wood", "calibrated", "shuttering"],
-                            "chemicals": ["chemical", "solvent", "acetone", "toluene", "ipa", "isopropanol", "acetate", "tanker", "resin", "paint"],
+                            "expansion_joints": ["expansion joint", "movement joint", "seismic", "fire barrier", "jsw", "floor joint"],
                             "waterproofing": ["waterproof", "fixit", "fastflex", "pidilite", "fevicol", "coating", "sealant", "expansion joint"],
                             "pidilite": ["pidilite", "fevicol", "adhesive", "probond", "heatx", "marine adhesive", "woodcraft", "joinery"]
                         }
@@ -238,8 +240,8 @@ class RecentWebLeadHarvester:
                             except Exception:
                                 pass
                                 
-                        # Require at least phone, email, or a real website URL
-                        if not phone and not email and not href.startswith("http"):
+                        # Require at least phone OR email - never save empty records
+                        if not phone and not email:
                             continue
                             
                         if len(title) > 3:

@@ -33,6 +33,7 @@ from tradeindia_scraper import TradeIndiaScraper
 from project_and_contractor_harvester import ProjectAndContractorHarvester
 from chemkonnect_mcp import mcp
 from titan_mailer import TitanMailer
+from whatsapp_meta import MetaWhatsAppClient
 
 app = FastAPI(title="Chemkonnect Global ₹100 Crore Sales Portal & Cloud MCP")
 lm = LeadManager()
@@ -42,6 +43,7 @@ indiamart = IndiaMartLeadPuller()
 tradeindia = TradeIndiaScraper(lead_manager=lm)
 project_harvester = ProjectAndContractorHarvester(lead_manager=lm)
 mailer = TitanMailer()
+wa_client = MetaWhatsAppClient()
 
 # Mount Remote Cloud MCP (SSE Transport) at /mcp
 try:
@@ -74,6 +76,17 @@ class SendPitchRequest(BaseModel):
 
 class AutoPitchRequest(BaseModel):
     limit: int = 10
+
+class MetaWhatsAppCredsRequest(BaseModel):
+    phone_number_id: str
+    access_token: str
+    waba_id: Optional[str] = ""
+    template_name: Optional[str] = ""
+    template_lang: Optional[str] = "en"
+    test_now: bool = True
+
+class SendWhatsAppPitchRequest(BaseModel):
+    custom_message: Optional[str] = None
 
 @app.get("/api/debug")
 def debug_status():
@@ -356,6 +369,91 @@ def save_titan_creds(req: TitanCredsRequest):
         "message": "Titan Mail credentials verified and saved successfully!",
         "sender_email": req.user
     }
+
+@app.get("/api/keep-alive")
+def keep_alive():
+    stats = lm.get_stats()
+    return {
+        "status": "alive",
+        "cloud": "Render",
+        "total_leads": stats.get("total_leads"),
+        "pipeline_crores": stats.get("pipeline_value_crores")
+    }
+
+@app.get("/api/admin/whatsapp-creds")
+def get_whatsapp_creds():
+    status = wa_client.get_status()
+    return {"status": "success", "creds": status}
+
+@app.post("/api/admin/whatsapp-creds")
+def save_whatsapp_creds(req: MetaWhatsAppCredsRequest):
+    if req.test_now:
+        test_res = wa_client.test_connection(phone_number_id=req.phone_number_id, access_token=req.access_token)
+        if not test_res.get("success"):
+            return {
+                "status": "error",
+                "message": test_res.get("error", "Meta WhatsApp authentication failed"),
+                "details": test_res
+            }
+    success = wa_client.save_credentials(
+        phone_number_id=req.phone_number_id,
+        access_token=req.access_token,
+        waba_id=req.waba_id or "",
+        template_name=req.template_name or "",
+        template_lang=req.template_lang or "en"
+    )
+    return {
+        "status": "success" if success else "error",
+        "message": "Meta WhatsApp credentials saved successfully!"
+    }
+
+@app.post("/api/leads/{lead_id}/send-whatsapp-meta")
+def send_whatsapp_meta_pitch(lead_id: int, req: Optional[SendWhatsAppPitchRequest] = None):
+    leads = lm.get_leads(limit=2000)
+    target = next((l for l in leads if l["id"] == lead_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    phone = target.get("phone") or ""
+    if not phone:
+        return {"status": "error", "message": "Lead has no phone number"}
+
+    custom_msg = req.custom_message if req else None
+    res = wa_client.send_whatsapp_pitch(
+        recipient_phone=phone,
+        lead_name=target["name"],
+        product_category=target.get("category", "Industrial Supplies"),
+        contact_person=target.get("contact_person", ""),
+        custom_message=custom_msg
+    )
+
+    if res.get("success"):
+        lm.update_lead(lead_id=lead_id, status="Pitched")
+        try:
+            lm.log_outreach(
+                lead_id=lead_id,
+                recipient_name=target.get("contact_person") or target["name"],
+                recipient_email=phone,
+                sender_email=wa_client.get_credentials().get("phone_number_id", "Meta_WhatsApp"),
+                subject=f"WhatsApp Pitch: {target.get('category')}",
+                body=custom_msg or f"Meta Template: {wa_client.get_credentials().get('template_name', 'Direct Pitch')}",
+                status="Sent",
+                error_message=""
+            )
+        except Exception as e:
+            print(f"[!] Outreach log notice: {e}")
+
+        return {
+            "status": "success",
+            "message": f"Official WhatsApp pitch delivered to {phone} via Meta Cloud API!",
+            "details": res
+        }
+    else:
+        return {
+            "status": "error",
+            "message": res.get("error", "Failed to send WhatsApp message via Meta"),
+            "details": res
+        }
 
 @app.get("/api/leads/{lead_id}/followup-pitch")
 def get_lead_followup_pitch(lead_id: int):

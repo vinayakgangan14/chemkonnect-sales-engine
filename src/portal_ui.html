@@ -66,6 +66,14 @@
 
             <!-- Top Actions -->
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button onclick="triggerImmediateHarvest()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg shadow-sm transition" title="Trigger real-time harvest across Maharashtra">
+                    <i class="fa-solid fa-cloud-arrow-down text-indigo-600"></i>
+                    <span class="hidden sm:inline">Harvest</span>
+                </button>
+                <button onclick="openWhatsAppModal()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition" title="Meta Official WhatsApp API Setup">
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <span class="hidden sm:inline">Meta WA API</span>
+                </button>
                 <button onclick="refreshLeads()" class="p-2 text-slate-600 hover:text-sky-600 hover:bg-slate-100 rounded-lg transition" title="Refresh leads">
                     <i class="fa-solid fa-rotate text-xs sm:text-sm"></i>
                 </button>
@@ -546,8 +554,13 @@
                                     <span>Send Pitch</span>
                                 </button>
 
-                                <a href="${lead.whatsapp_url || '#'}" target="_blank" class="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs transition inline-flex items-center justify-center shadow-sm" title="Chat on WhatsApp Web">
+                                <button onclick="sendMetaWhatsApp(${lead.id})" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm" title="Drop Official WhatsApp Pitch via Meta API">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>WA</span>
+                                </button>
+
+                                <a href="${lead.whatsapp_url || '#'}" target="_blank" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs transition inline-flex items-center justify-center" title="Open in Personal WhatsApp Web/App">
+                                    <i class="fa-regular fa-share-from-square text-xs"></i>
                                 </a>
 
                                 <button onclick="openPreviewModal(${lead.id})" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition" title="Preview Proposal Text">
@@ -642,17 +655,18 @@
                         </div>
 
                         <!-- Touch-Friendly Mobile Action Buttons -->
-                        <div class="grid grid-cols-5 gap-2 pt-1 border-t border-slate-100">
+                        <div class="grid grid-cols-6 gap-2 pt-1 border-t border-slate-100">
                             <!-- Send Pitch Button (3 cols) -->
-                            <button onclick="openTitanMailComposer(${lead.id})" class="col-span-3 py-2.5 px-3 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <button onclick="openTitanMailComposer(${lead.id})" class="col-span-3 py-2.5 px-2 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
                                 <i class="fa-solid fa-paper-plane text-xs"></i>
-                                <span>Send Pitch</span>
+                                <span>Pitch Mail</span>
                             </button>
 
-                            <!-- WhatsApp Button (1 col) -->
-                            <a href="${lead.whatsapp_url || '#'}" target="_blank" class="col-span-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center shadow-sm">
+                            <!-- Send Meta WhatsApp Button (2 cols) -->
+                            <button onclick="sendMetaWhatsApp(${lead.id})" class="col-span-2 py-2.5 px-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm" title="Send Official WhatsApp Pitch">
                                 <i class="fa-brands fa-whatsapp text-sm"></i>
-                            </a>
+                                <span>WA Drop</span>
+                            </button>
 
                             <!-- Preview Modal Button (1 col) -->
                             <button onclick="openPreviewModal(${lead.id})" class="col-span-1 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 rounded-xl text-xs font-bold transition flex items-center justify-center">
@@ -813,6 +827,115 @@ Industrial Logistics Hub: Dombivli / Thane, Maharashtra`;
             }
         }
 
+        
+        // Meta Official WhatsApp Cloud API Actions
+        async function openWhatsAppModal() {
+            document.getElementById("whatsapp-modal").classList.remove("hidden");
+            try {
+                const res = await fetch("/api/admin/whatsapp-creds");
+                const data = await res.json();
+                if (data.status === "success" && data.creds) {
+                    document.getElementById("wa-phone-id").value = data.creds.phone_number_id || "";
+                    document.getElementById("wa-template-name").value = data.creds.template_name || "";
+                    const statusText = document.getElementById("wa-status-text");
+                    if (data.creds.configured) {
+                        statusText.innerHTML = `<span class="text-emerald-600 font-semibold">✔ Configured & Active</span> (Phone ID: ${escapeHtml(data.creds.phone_number_id)})`;
+                    } else {
+                        statusText.innerHTML = `<span class="text-amber-600 font-medium">⚪ Not Configured. Enter your Meta credentials above.</span>`;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load WhatsApp creds", e);
+            }
+        }
+
+        function closeWhatsAppModal() {
+            document.getElementById("whatsapp-modal").classList.add("hidden");
+        }
+
+        async function saveWhatsAppCreds() {
+            const phoneId = document.getElementById("wa-phone-id").value.trim();
+            const token = document.getElementById("wa-access-token").value.trim();
+            const template = document.getElementById("wa-template-name").value.trim();
+            const statusText = document.getElementById("wa-status-text");
+
+            if (!phoneId) {
+                showToast("Please enter Phone Number ID", "error");
+                return;
+            }
+
+            statusText.innerHTML = `<span class="text-sky-600">Verifying credentials with Meta Graph API...</span>`;
+
+            try {
+                const res = await fetch("/api/admin/whatsapp-creds", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone_number_id: phoneId,
+                        access_token: token,
+                        template_name: template,
+                        test_now: token.length > 0
+                    })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    showToast("Meta WhatsApp credentials saved & active!", "success");
+                    statusText.innerHTML = `<span class="text-emerald-600 font-semibold">✔ Verified & Connected to Meta</span>`;
+                    setTimeout(closeWhatsAppModal, 1200);
+                } else {
+                    showToast(data.message || "Failed to verify Meta WhatsApp credentials", "error");
+                    statusText.innerHTML = `<span class="text-rose-600 font-medium">✖ ${escapeHtml(data.message)}</span>`;
+                }
+            } catch (e) {
+                showToast("Network error verifying Meta credentials", "error");
+            }
+        }
+
+        async function sendMetaWhatsApp(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+
+            if (!lead.phone) {
+                showToast("Lead has no phone number", "error");
+                return;
+            }
+
+            showToast(`Dispatching official WhatsApp pitch to ${lead.phone}...`, "info");
+
+            try {
+                const res = await fetch(`/api/leads/${leadId}/send-whatsapp-meta`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    showToast(`✔ Delivered official WhatsApp pitch to ${lead.phone}!`, "success");
+                    updateLeadStatus(leadId, "Pitched");
+                } else {
+                    if (data.message && data.message.includes("not configured")) {
+                        showToast("Please configure Meta WhatsApp API credentials in top menu", "error");
+                        openWhatsAppModal();
+                    } else {
+                        showToast(data.message || "Failed to dispatch via Meta API", "error");
+                    }
+                }
+            } catch (e) {
+                showToast("Network error communicating with Meta API", "error");
+            }
+        }
+
+        async function triggerImmediateHarvest() {
+            showToast("Triggering instant B2B market harvest across Maharashtra...", "info");
+            try {
+                const res = await fetch("/api/trigger-hourly-harvest", { method: "POST" });
+                const data = await res.json();
+                showToast("Autonomous market harvest running in background!", "success");
+                setTimeout(fetchLeads, 4000);
+            } catch (e) {
+                showToast("Harvest notice: background worker busy", "info");
+            }
+        }
+
         function showToast(message, type = "info") {
             const container = document.getElementById("toast-container");
             const toast = document.createElement("div");
@@ -840,5 +963,64 @@ Industrial Logistics Hub: Dombivli / Thane, Maharashtra`;
                 .replace(/'/g, '&#039;');
         }
     </script>
+
+    <!-- Meta WhatsApp Cloud API Settings Modal -->
+    <div id="whatsapp-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white max-w-lg w-full rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Meta WhatsApp Cloud API</h3>
+                        <p class="text-xs text-slate-500">Official Outbound Messaging for Your Number</p>
+                    </div>
+                </div>
+                <button onclick="closeWhatsAppModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-800 text-[11px] leading-relaxed">
+                    ✔ <strong>100% Cloud Auto-Drop:</strong> Messages dispatch directly from your official WhatsApp Business number via Meta's official API servers with zero device dependency.
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Phone Number ID:</label>
+                    <input id="wa-phone-id" type="text" placeholder="e.g. 104938202938472" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <p class="text-[10px] text-slate-400 mt-0.5">Found in your Meta App Dashboard under WhatsApp &gt; API Setup.</p>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">System User Access Token:</label>
+                    <input id="wa-access-token" type="password" placeholder="EAABw..." class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <p class="text-[10px] text-slate-400 mt-0.5">Permanent token from Meta Business Manager &gt; System Users.</p>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Template Name (Optional):</label>
+                    <input id="wa-template-name" type="text" placeholder="e.g. chemkonnect_b2b_pitch" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <p class="text-[10px] text-slate-400 mt-0.5">Leave blank to send standard pre-formatted text proposals.</p>
+                </div>
+                
+                <div id="wa-status-box" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+                    <span id="wa-status-text">Status: Checking credentials...</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button onclick="closeWhatsAppModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+                    Close
+                </button>
+                <button onclick="saveWhatsAppCreds()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-circle-check text-xs"></i>
+                    <span>Verify & Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
